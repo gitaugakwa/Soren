@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Activation">
+      <UniqueIdentifier>{97395103-83F1-9250-ECF8-6BACD8CF2D41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application">
+      <UniqueIdentifier>{D9DE78AF-4594-F1A4-CE88-EB7B3A3DE8A8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Events">
+      <UniqueIdentifier>{3A8963B1-262B-8E87-0FE6-A1DBFB2615D8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{953A660D-014F-8EBE-CAD0-311E36A48AEF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layer">
+      <UniqueIdentifier>{6287950D-CE9B-BDBE-971D-611E03F1B9EF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Link">
+      <UniqueIdentifier>{9389887C-7FC0-890D-28AD-6F1014C3050F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Log">
+      <UniqueIdentifier>{E704880B-530E-887C-DC89-9E7C4892937C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{8F6A0D6C-FB49-8C07-0462-17DE70C0F268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Node">
+      <UniqueIdentifier>{8BBA897C-77F1-8A0D-20DE-70100CF4060F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Output">
+      <UniqueIdentifier>{5649ADC8-42EB-D79E-2BA6-EBF217E75EEF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Random">
+      <UniqueIdentifier>{065B3FCE-F2FC-69A4-DBB7-7DF8C7F8F0F4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Status">
+      <UniqueIdentifier>{2979E5D1-151B-10A8-FED5-23FCEA1697F8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test">
+      <UniqueIdentifier>{45DC8C7C-3113-8E0D-DAFF-7310C6150A0F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Train">
+      <UniqueIdentifier>{43382F0E-AF4C-57BF-78CE-FA1EE4A153F0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Activation\Activation.h">
+      <Filter>Activation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Application\Application.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Base.h" />
+    <ClInclude Include="src\CallbackFunctions.h" />
+    <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\EntryPoint.h" />
+    <ClInclude Include="src\Events\ApplicationEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\Event.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\InputEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\KeyEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\LayerEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\LinkEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\MouseEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\NetworkEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\NodeEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\OutputEvent.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Input\Input.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\KeyCodes.h" />
+    <ClInclude Include="src\Layer\Layer.h">
+      <Filter>Layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Layer\layData.h">
+      <Filter>Layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Link\Link.h">
+      <Filter>Link</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Link\linkData.h">
+      <Filter>Link</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Log\Log.h">
+      <Filter>Log</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MouseButtonCodes.h" />
+    <ClInclude Include="src\Network\Network.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Network\netData.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Node\Node.h">
+      <Filter>Node</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Node\nodeData.h">
+      <Filter>Node</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Output\Output.h">
+      <Filter>Output</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Soren.h" />
+    <ClInclude Include="src\Random\Random.h">
+      <Filter>Random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Status\Status.h">
+      <Filter>Status</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Test\Test.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThreadPool.h" />
+    <ClInclude Include="src\Timer.h" />
+    <ClInclude Include="src\Train\Train.h">
+      <Filter>Train</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Type.h" />
+    <ClInclude Include="src\sorenpch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Activation\Activation.cpp">
+      <Filter>Activation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Application\Application.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input\Input.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\Layer.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layEvent.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layFile.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layInput.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layLink.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layNetwork.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layNode.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layOutput.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer\layStatus.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\Link.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkEvent.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkFile.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkInput.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkLayer.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkNetwork.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkNode.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkOutput.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Link\linkStatus.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Log\Log.cpp">
+      <Filter>Log</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\NetFile.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\Network.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netEvent.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netInput.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netLayer.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netLink.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netNode.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netOutput.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netStatus.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Network\netSync.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\Node.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeEvent.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeFile.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeInput.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeLayer.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeLink.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeNetwork.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeOutput.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Node\nodeStatus.cpp">
+      <Filter>Node</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Output\Output.cpp">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Random\Random.cpp">
+      <Filter>Random</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Status\Status.cpp">
+      <Filter>Status</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\Test.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Train\Train.cpp">
+      <Filter>Train</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sorenpch.cpp" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,8 @@
+[submodule "Soren/Vendor/json"]
+	path = Soren/Vendor/json
+	url = https://github.com/nlohmann/json
+	branch = master
+[submodule "Soren/Vendor/spdlog"]
+	path = Soren/Vendor/spdlog
+	url = https://github.com/gabime/spdlog
+	branch = master

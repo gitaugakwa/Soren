@@ -1,0 +1,248 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Dist|x64">
+      <Configuration>Dist</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6CC21B0E-D8D6-43BF-A158-E71E0D2C40F0}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Soren</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\bin\Debug-windows-x86_64\Soren\</OutDir>
+    <IntDir>..\bin-int\Debug-windows-x86_64\Soren\</IntDir>
+    <TargetName>Soren</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\bin\Release-windows-x86_64\Soren\</OutDir>
+    <IntDir>..\bin-int\Release-windows-x86_64\Soren\</IntDir>
+    <TargetName>Soren</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <OutDir>..\bin\Dist-windows-x86_64\Soren\</OutDir>
+    <IntDir>..\bin-int\Dist-windows-x86_64\Soren\</IntDir>
+    <TargetName>Soren</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>sorenpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
+    </Lib>
+    <PostBuildEvent>
+      <Command>IF EXIST ..\bin\Debug-windows-x86_64\Soren\Soren.lib\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\Soren\Soren.lib "..\bin\Debug-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\Soren\Soren.lib "..\bin\Debug-windows-x86_64\Sandbox\" &gt; nul)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>sorenpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
+    </Lib>
+    <PostBuildEvent>
+      <Command>IF EXIST ..\bin\Release-windows-x86_64\Soren\Soren.lib\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\Soren\Soren.lib "..\bin\Release-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\Soren\Soren.lib "..\bin\Release-windows-x86_64\Sandbox\" &gt; nul)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>sorenpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
+    </Lib>
+    <PostBuildEvent>
+      <Command>IF EXIST ..\bin\Dist-windows-x86_64\Soren\Soren.lib\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\Soren\Soren.lib "..\bin\Dist-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\Soren\Soren.lib "..\bin\Dist-windows-x86_64\Sandbox\" &gt; nul)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Activation\Activation.h" />
+    <ClInclude Include="src\Application\Application.h" />
+    <ClInclude Include="src\Base.h" />
+    <ClInclude Include="src\CallbackFunctions.h" />
+    <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\EntryPoint.h" />
+    <ClInclude Include="src\Events\ApplicationEvent.h" />
+    <ClInclude Include="src\Events\Event.h" />
+    <ClInclude Include="src\Events\InputEvent.h" />
+    <ClInclude Include="src\Events\KeyEvent.h" />
+    <ClInclude Include="src\Events\LayerEvent.h" />
+    <ClInclude Include="src\Events\LinkEvent.h" />
+    <ClInclude Include="src\Events\MouseEvent.h" />
+    <ClInclude Include="src\Events\NetworkEvent.h" />
+    <ClInclude Include="src\Events\NodeEvent.h" />
+    <ClInclude Include="src\Events\OutputEvent.h" />
+    <ClInclude Include="src\Input\Input.h" />
+    <ClInclude Include="src\KeyCodes.h" />
+    <ClInclude Include="src\Layer\Layer.h" />
+    <ClInclude Include="src\Layer\layData.h" />
+    <ClInclude Include="src\Link\Link.h" />
+    <ClInclude Include="src\Link\linkData.h" />
+    <ClInclude Include="src\Log\Log.h" />
+    <ClInclude Include="src\MouseButtonCodes.h" />
+    <ClInclude Include="src\Network\Network.h" />
+    <ClInclude Include="src\Network\netData.h" />
+    <ClInclude Include="src\Node\Node.h" />
+    <ClInclude Include="src\Node\nodeData.h" />
+    <ClInclude Include="src\Output\Output.h" />
+    <ClInclude Include="src\Soren.h" />
+    <ClInclude Include="src\Random\Random.h" />
+    <ClInclude Include="src\Status\Status.h" />
+    <ClInclude Include="src\Test\Test.h" />
+    <ClInclude Include="src\ThreadPool.h" />
+    <ClInclude Include="src\Timer.h" />
+    <ClInclude Include="src\Train\Train.h" />
+    <ClInclude Include="src\Type.h" />
+    <ClInclude Include="src\sorenpch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Activation\Activation.cpp" />
+    <ClCompile Include="src\Application\Application.cpp" />
+    <ClCompile Include="src\Input\Input.cpp" />
+    <ClCompile Include="src\Layer\Layer.cpp" />
+    <ClCompile Include="src\Layer\layEvent.cpp" />
+    <ClCompile Include="src\Layer\layFile.cpp" />
+    <ClCompile Include="src\Layer\layInput.cpp" />
+    <ClCompile Include="src\Layer\layLink.cpp" />
+    <ClCompile Include="src\Layer\layNetwork.cpp" />
+    <ClCompile Include="src\Layer\layNode.cpp" />
+    <ClCompile Include="src\Layer\layOutput.cpp" />
+    <ClCompile Include="src\Layer\layStatus.cpp" />
+    <ClCompile Include="src\Link\Link.cpp" />
+    <ClCompile Include="src\Link\linkEvent.cpp" />
+    <ClCompile Include="src\Link\linkFile.cpp" />
+    <ClCompile Include="src\Link\linkInput.cpp" />
+    <ClCompile Include="src\Link\linkLayer.cpp" />
+    <ClCompile Include="src\Link\linkNetwork.cpp" />
+    <ClCompile Include="src\Link\linkNode.cpp" />
+    <ClCompile Include="src\Link\linkOutput.cpp" />
+    <ClCompile Include="src\Link\linkStatus.cpp" />
+    <ClCompile Include="src\Log\Log.cpp" />
+    <ClCompile Include="src\Network\NetFile.cpp" />
+    <ClCompile Include="src\Network\Network.cpp" />
+    <ClCompile Include="src\Network\netEvent.cpp" />
+    <ClCompile Include="src\Network\netInput.cpp" />
+    <ClCompile Include="src\Network\netLayer.cpp" />
+    <ClCompile Include="src\Network\netLink.cpp" />
+    <ClCompile Include="src\Network\netNode.cpp" />
+    <ClCompile Include="src\Network\netOutput.cpp" />
+    <ClCompile Include="src\Network\netStatus.cpp" />
+    <ClCompile Include="src\Network\netSync.cpp" />
+    <ClCompile Include="src\Node\Node.cpp" />
+    <ClCompile Include="src\Node\nodeEvent.cpp" />
+    <ClCompile Include="src\Node\nodeFile.cpp" />
+    <ClCompile Include="src\Node\nodeInput.cpp" />
+    <ClCompile Include="src\Node\nodeLayer.cpp" />
+    <ClCompile Include="src\Node\nodeLink.cpp" />
+    <ClCompile Include="src\Node\nodeNetwork.cpp" />
+    <ClCompile Include="src\Node\nodeOutput.cpp" />
+    <ClCompile Include="src\Node\nodeStatus.cpp" />
+    <ClCompile Include="src\Output\Output.cpp" />
+    <ClCompile Include="src\Random\Random.cpp" />
+    <ClCompile Include="src\Status\Status.cpp" />
+    <ClCompile Include="src\Test\Test.cpp" />
+    <ClCompile Include="src\Train\Train.cpp" />
+    <ClCompile Include="src\sorenpch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
