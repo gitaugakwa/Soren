@@ -49,6 +49,7 @@ project "Soren"
 	{
 		"Soren/Vendor/spdlog/include",
 		"Soren/Vendor/json/include",
+		"Soren/Vendor/eigen",
 		"%{prj.name}/src"
 	}
 
@@ -116,6 +117,7 @@ project "Sandbox"
 	{
 		"Soren/Vendor/spdlog/include",
 		"Soren/Vendor/json/include",
+		"Soren/Vendor/eigen",
 		"%{prj.name}/src",
 		"Soren/src"
 	}

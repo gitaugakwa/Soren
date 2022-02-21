@@ -1,8 +1,8 @@
 #pragma once
 #include "Core.h"
-#include "Type.h"
 #include "ThreadPool.h"
 #include "Activation/Activation.h"
+#include "Random/Random.h"
 #include "Log/Log.h"
 
 #include <functional>
@@ -124,8 +124,9 @@ namespace Soren {
 		std::vector<VecType>* Data = nullptr;
 	};
 
+	template<typename TGradient>
 	struct GradientData {
-		Gradient_t Gradient = 0;
+		TGradient Gradient = 0;
 		bool Initialized = false;
 
 		operator bool() noexcept {
@@ -133,8 +134,9 @@ namespace Soren {
 		}
 	};
 
+	template<typename TVariance>
 	struct VarianceData {
-		Variance_t Variance = 0;
+		TVariance Variance = 0;
 		bool Initialized = false;
 
 		operator bool() noexcept {
@@ -176,7 +178,7 @@ namespace Soren {
 		{
 			if (!Initialized)
 			{
-				OL_CORE_ERROR("Initialize Activation");
+				SOREN_CORE_ERROR("Initialize Activation");
 				assert(false);
 				return -1;
 			}
@@ -343,18 +345,18 @@ namespace Soren {
 			}
 		}
 
-		template <typename T>
-		T Resolve(T node, Gradient_t grad) const
+		template <typename TNode, typename TGradient>
+		TNode Resolve(TNode node, TGradient grad) const
 		{
 			if (!Initialized)
 			{
-				OL_CORE_ERROR("Initialize Activation");
+				SOREN_CORE_ERROR("Initialize Activation");
 				assert(false);
 				return -1;
 			}
 
 			if (!grad)
-				OL_CORE_WARN("Activation function Gradient is 0");
+				SOREN_CORE_WARN("Activation function Gradient is 0");
 
 			switch(Activation)
 			{
@@ -392,21 +394,21 @@ namespace Soren {
 			}
 		}
 
-		template <typename T>
-		T Resolve(T node, Gradient_t grad, Variance_t var) const
+		template <typename TNode,typename TGradient, typename TVariance>
+		TNode Resolve(TNode node, TGradient grad, TVariance var) const
 		{
 			if (!Initialized)
 			{
-				OL_CORE_ERROR("Initialize Activation");
+				SOREN_CORE_ERROR("Initialize Activation");
 				assert(false);
 				return -1;
 			}
 
 			if (!grad)
-				OL_CORE_WARN("Activation function Gradient is 0");
+				SOREN_CORE_WARN("Activation function Gradient is 0");
 
 			if (!var)
-				OL_CORE_WARN("Activation function Variance is 0");
+				SOREN_CORE_WARN("Activation function Variance is 0");
 
 			switch (Activation)
 			{

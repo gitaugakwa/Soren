@@ -1,261 +1,307 @@
 #pragma once
-//#include <filesystem>
 #include "Core.h"
 #include "Base.h"
 
-#include "netData.h"
-#include "Link/linkData.h"
-
 #include "Status/Status.h"
-#include "Type.h"
-#include "Random/Random.h"
 
 #include "Log/Log.h"
 #include "Events/Event.h"
-
-#include "Input/Input.h"
-#include "Output/Output.h"
 
 #include "CallbackFunctions.h"
 
 #include "nlohmann/json.hpp"
 
-
-// Find a way to have Link events static per network
-// Everything static needs to be changed relative to network
 namespace Soren {
 
-namespace Neural {
+	template <typename T>
+	class FileOutput;
+	template <typename T>
+	class FileInput;
 
-	class SOREN_API Link;
-	class SOREN_API Node;
-	class SOREN_API Layer;
+	namespace Neural {
 
-	class SOREN_API Network
-	{
-		//#define BIND_EVENT_FN(x) std::bind(&Network::x, this, std::placeholders::_1)
-		friend class Input;
-		friend class Output;
+		class Event;
 
-		friend class Train;
+		struct Linkable;
+		template<typename TWeight>
+		class Linker;
 
-		friend class Layer;
-		friend class Node;
-		friend class Link;
-	public:
+		template<typename TValue, typename TBias, typename TWeight>
+		class Node;
+		template<typename TValue, typename TBias, typename TWeight>
+		class Layer;
 
-		Network();
-		~Network();
+		class BaseLayer;
 
-		// Network
+		class BaseNetwork : public Linkable {
 
-		inline void title(const std::string& title) { if (m_Locked) return; m_Title = title; }
-		bool NetworkValid() const;
-		void clear();
-		void reset();
+			//template<typename TValue, typename TBias, typename TWeight>
+			//friend class Layer;
+		public:
 
-		void init();
-		void deinit();
+			BaseNetwork(): mId{ sId++ } {};
+			~BaseNetwork() {};
 
-		inline std::string title() const { return m_Title; }
-		inline bool locked() const { return m_Locked; }
-		size_t size() const;
-		
-		void locked(bool lock) { m_Locked = lock; }
-		void lock() { m_Locked = true; }
-		void unlock() { m_Locked = false; }
+			inline size_t id() const override { return mId; }
 
-		//void SetActivationFunction(ActivationFunction activation);
-		//void SetActivationFunction(lambda func) -> lambda that takes in Node_t then returns Node_t
+			// Special member functions
+			#pragma region
+			BaseNetwork(const BaseNetwork&)
+				: mId(sId++) {};
+			BaseNetwork(BaseNetwork&& arg) noexcept
+				: mId(std::exchange(arg.mId, 0)) {};
+			BaseNetwork& operator=(const BaseNetwork&) {
+				mId = sId++;
+				return *this;
+			};
+			BaseNetwork& operator=(BaseNetwork&& arg) noexcept {
+				mId = std::move(arg.mId);
+				return *this;
+			};
+			#pragma endregion
 
-		// Callbacks
-		inline void SetEventCallbackFunction(const EventCallbackFn& callback) { m_EventCallback = callback; }
-		inline void DefaultCallbacks() { m_Callbacks.Default(); }
-		void DeleteEventCallback(const EventType& type);
+		protected:
+			inline static size_t sId = 1;
+			size_t mId;
+		};
 
-		// Data functions
-
-		// Input
-		void AddInput(Soren::FileInput<Input_t>& fi);
-		void AddInput(const std::string& name, const std::filesystem::path& filepath, std::ios::openmode mode);
-		void DeleteInput(const std::string& name);
-
-		// Import
-		bool Import(const ImportType importtype = ImportType::Normal, const bool override = true, const bool cascade = true);
-		bool Import(Soren::FileInput<Input_t> fi, const ImportType importtype = ImportType::Normal, const bool override = true, const bool cascade = true);
-		bool Import(const nlohmann::json j, const ImportType importtype = ImportType::Normal, const bool override = true, const bool cascade = true);
-
-		Soren::Accessor<FileInput<Input_t>> FileInputs;
-
-		// Output
-		void AddOutput(Soren::FileOutput<Output_t>& fo);
-		void AddOutput(const std::string& name, const std::filesystem::path& filepath, std::ios::openmode mode);
-		void DeleteOutput(const std::string& name);
-
-		// Export
-		bool Export(const ExportType exporttype = ExportType::Normal, const bool cascade = true) const;
-		bool Export(Soren::FileOutput<Output_t>& fo, const ExportType exporttype = ExportType::Normal, const bool cascade = true) const;
-
-		Soren::Accessor<FileOutput<Output_t>> FileOutputs;
-
-		// Sync
-		void JSONSync(const std::string& networkname = "Network") const;
-
-		// OnEvent functions
-		void AddEvent(const EventType& eventtype, void(*func)(const Soren::Event&));
-		void DeleteEvent(const EventType& type, void (*func)(const Soren::Event&));
-		void DeleteEvent(const EventType& type, size_t number);
-
-		// Turn this into a vector like opject with push and stuff like that
-		// Layer
-		inline Soren::Accessor<Layer>& Layers() { return NetLayers; }
-		Soren::Accessor<Layer>& Layers(const size_t layers, const std::string& name = "Layer");
-		Soren::Accessor<Layer>& Layers(const size_t layers, size_t nodes, const std::string& name = "Layer");
-		Soren::Accessor<Layer>& AddLayers(const size_t layers, const std::string& name = "Layer");
-		Soren::Accessor<Layer>& AddLayers(const size_t layers, size_t nodes, const std::string& name = "Layer");
-
-		Layer* GetLayer(const size_t id);
-		Layer* GetLayer(const Node& id);
-		Layer* GetLayerPos(const size_t pos);
-		// Get the position in the vector that the layer is in
-		size_t FindLayer(const Layer& layer) const;
-		size_t FindLayer(const size_t layerid) const;
-
-		void InsertLayer(const size_t pos, const std::string& name = "Layer");
-		void DeleteLayer(const size_t id);
-		void DeleteLayer(const Layer& layer);
-
-		void SetPutFunc(void(*func)(Layer& layer));
-		void SetPullFunc(void(*func)(const Layer& layer));
-
-		void Put(Layer& layer);
-		void Pull(const Layer& layer);
-		
-		Soren::Accessor<Layer> NetLayers{};
-
-		// Node
-		void Nodes(size_t nodes);
-		void NodesDefaultBiasLimits(Bias_t min, Bias_t max);
-		void NodesDefaultBiasLimits(Bias_t max);
-
-		void DeleteNode(const Node& node);
-		void DeleteNode(const size_t id);
-
-		size_t DefaultNodeCount{};
-
-		// Link functions
-		void Links(const Layer& source, Layer& output);
-		void LinksDefaultWeightLimits(Weight_t min, const Weight_t& max);
-		void LinksDefaultWeightLimits(Weight_t max);
-
-		std::string str(const std::string& networkpref = "", const std::string& networksuf = "", const std::string& layerpref = "", const std::string& layersuf = "", const std::string& nodepref = "", const std::string& nodesuf = "", const std::string& linkpref = "", const std::string& linksuf = "") const;
-
-		// Public callbacks
-		void SetNetworkEventfunc(const EventType& type, NetworkEventfunc func);
-
-		// Status functions
-		inline std::string GetStatus() const { return m_Status.str(); }
-
-		// Special member functions
-		Network(const Network& arg);
-		Network(Network&& arg) noexcept;
-		Network& operator=(const Network& arg);
-		Network& operator=(Network&& arg) noexcept;
-
-		// Operators
-		Layer& operator[](size_t rhs);
-		bool operator==(const Network& rhs) const;
-		bool operator==(const Layer& rhs) const;
-		bool operator!=(const Network& rhs) const;
-		bool operator!=(const Layer& rhs) const;
-
-		friend std::ostream& operator<<(std::ostream& os, const Network& network);
-		//friend FileOutput<char>& operator<<(FileOutput<char>& fos, const Network& network);
-		template <typename T>
-		friend Soren::FileOutput<T>& operator<<(Soren::FileOutput<T>& fos, const Network& network)
+		template<typename TValue = double, typename TBias = TValue, typename TWeight = TValue>
+		class SOREN_API Network : public EventEmmiter, public BaseNetwork// Should be NetworkEvent
 		{
-			fos << network.str("", "", "\t", "", "\t\t", "", "\t\t\t");
-			return fos;
-		}
+			//template<typename TValue, typename TBias, typename TWeight>
+			//friend class Network;
 
-	private:
+		public:
 
-		// Events
-		inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Network::OnEvent)); }
-		void CheckAdditionalEvents(const Soren::Event& e);
-		void OnEvent(const Soren::Event& e);
+			Network()
+				//: mId{sId++}
+			{
+				NetworkCreatedEvent event{};
+				Emit(event);
+			}
+			~Network() {
+				NetworkDeletedEvent event{};
+				Emit(event);
+			};
 
-		// Status function
-		void SetStatus(const StatusCategory& status);
-		inline NetworkStatus& GetStatusFlags() { return m_Status; }
-		bool Is(const StatusCategory& status) const { return m_Status.IsInCategory(status); }
-
-		// File
-		bool SeekBegin(Soren::FileInput<Input_t>& fi);
-		bool SeekEnd(Soren::FileInput<Input_t>& fi);
-
-		// Layer
-		size_t m_LayerCounter = 0;
-		EventCallbackFn m_LayerEventCallback{};
-
-		// Node
-		Bias m_BiasData{};
-		inline Bias BiasData() const { return m_BiasData; }
-		void BiasData(Bias_t min, Bias_t max);
-		void BiasData(Bias_t max);
-
-		size_t m_NodeCounter = 0;
-		EventCallbackFn m_NodeEventCallback{};
-
-		// Link
-		Weight m_WeightData{};
-		inline Weight WeightData() const { return m_WeightData; }
-		void WeightData(Weight_t min, Weight_t max);
-		void WeightData(Weight_t max);
-
-		size_t m_LinkCounter = 0;
-		EventCallbackFn m_LinkEventCallback{};
-
-		LinkCallbacks m_LinkCallbacks{};
-
-		LinkEvents m_LinkEvents{};
-
-		// Data
-
-		std::string m_Title{};
-		bool m_Locked = false;
-
-		EventCallbackFn m_EventCallback{};
-
-		std::vector<Layer> m_Layers{};
-
-		NetworkStatus m_Status{};
-
-		// maybe vector so that the user can store functions that can then be easily accessed through the network itself
-		// this i guess allows for better use, like emplace_back (name of function, actual function)
-		std::function<void(Layer& layer)> m_PutFunc = nullptr;
-		std::function<void(const Layer& layer)> m_PullFunc = nullptr;
-
-		std::vector<FileInput<Input_t>> m_FileInputs{};
-		std::vector<FileOutput<Output_t>> m_FileOutputs{};
-
-		// Directories
-
-		std::filesystem::path m_BaseDir= "./";
-
-		// Export
-
-		const std::string m_OpeningTag = "<Network>";
-		const std::string m_ClosingTag = "</Network>";
-
-		NetworkCallbacks m_Callbacks{};
-		NetworkEvents m_Events{};
-	};
-
-	void to_json(nlohmann::json& j, const Network& network);
-	//void from_json(const nlohmann::json& j, Network& network);
-} // namespace Neural
+			//inline size_t id() const override { return mId; }
+			//inline TValue value() const { return mValue; }
+			//inline TBias bias() const { return mBias; }
+			inline const std::map<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>& layers() const { return mLayers; }
+			inline bool running() const { return mRunning; }
+			inline bool locked() const { return mLocked; }
 
 
+			void clear() {
+				if (mLocked) return;
 
+				mLayers.clear();
+
+				NetworkClearedEvent event{};
+				Emit(event);
+
+				// Reset Activation function if stored by Link
+			};
+
+			void halt() {
+
+				//const running = m_Running;
+				mRunning = FALSE;
+
+				NetworkDisabledEvent event{};
+				Emit(event);
+
+			};
+			void resume() {
+				mRunning = TRUE;
+
+				NetworkEnabledEvent event{};
+				Emit(event);
+			};
+
+			void reset() {
+				NetworkResetEvent event{};
+				Emit(event);
+			};
+
+			// Layer
+			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
+			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer) {
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					(pos->second)->link(layer);
+				}
+				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
+				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer) ));
+				return *this;
+			}
+			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
+			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<bool(BaseNode& current, BaseNode& input)> shouldLink) {
+				layer.setShouldLink(shouldLink);
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					static_cast<Layer<>*>((pos->second))->link(*static_cast<Layer<TValue, TBias, TWeight>*>(&layer));
+				}
+				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
+				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
+				return *this;
+			}
+			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
+			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<TWeight(void)> weightGenerator) {
+				layer.setWeightGenerator(weightGenerator);
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					(pos->second)->link(layer);
+				}
+				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
+				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
+				return *this;
+			}
+			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
+			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> linkGenerator, std::function<TWeight(void)> weightGenerator) {
+				layer.setLinkGenerator(linkGenerator);
+				layer.setWeightGenerator(weightGenerator);
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					(pos->second)->link(layer);
+				}
+				//auto layer = new Layer(std::move(layer));
+				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
+				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
+				return *this;
+			}
+
+			// Eigen
+
+			inline Eigen::VectorX<typename std::common_type<TValue, TBias>::type> resolveMatrix() {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					for (size_t iLayers = 0; iLayers < mLayers.size() && std::distance(pos, mLayers.end()) > 1; iLayers++, pos++) {
+						(pos->second)->pipeMatrix(*(std::next(pos, 1)->second));
+					}
+					return (pos->second)->outputMatrix();
+				}
+				throw std::range_error("No Layers in network");
+			}
+
+			// Basic
+			#pragma region
+			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::vector<TInputValue>& value) {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					pos->second->input(value);
+				}
+				return (*this);
+			}
+			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::vector<TInputValue>&& value) {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					(pos->second)->input(value);
+				}
+				return (*this);
+			}
+			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::map<size_t, TInputValue>& value) {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					pos->second->input(value);
+				}
+				return *this;
+			}
+			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::map<size_t, TInputValue>&& value) {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					pos->second->input(value);
+				}
+				return *this;
+			}
+
+			template<typename TValue>
+			inline std::vector<TValue> output() const {
+
+				if (auto pos = mLayers.rbegin(); pos != mLayers.end()) {
+					return pos->second.output();
+				}
+				throw std::range_error("No Layers in network");
+				
+			}
+
+			template<typename TLinkNetworkValue>
+			std::map<size_t, TLinkNetworkValue> resolveMap() {
+
+				std::map<size_t, TLinkNetworkValue> data;
+
+				for (auto& [node, links] : mLinker.links()) {
+					for (auto& [linkedNode, link] : links) {
+						data[linkedNode.get().id()] += static_cast<TLinkNetworkValue>(link.pipe<TValue>(dynamic_cast<Node<TValue, TBias, TWeight>*>(&(node.get()))->output()));
+					}
+				}
+
+				for (auto& [node, links] : Network.mLinker.links()) {
+					for (auto& [linkedNode, link] : links) {
+						auto pos = mNodes.find(linkedNode.get().id());
+						if (pos != mNodes.end()) {
+							data[node.get().id()] += static_cast<TLinkNetworkValue>(link.pipe<TLinkNetworkValue>(dynamic_cast<Node<TLinkNetworkValue, TLinkNetworkBias, TLinkNetworkWeight>*>(&(linkedNode.get()))->output()));
+						}
+					}
+				}
+
+				return data;
+			}
+
+			std::vector<typename std::common_type<TValue, TBias>::type> resolve() {
+				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
+					for (size_t iLayers = 0; iLayers < mLayers.size() && std::distance(pos, mLayers.end()) > 1; iLayers++, pos++) {
+						(pos->second)->pipe(*(std::next(pos, 1)->second));
+					}
+					return (pos->second)->output();
+				}
+				throw std::range_error("No Layers in network");
+			}
+
+			//template <typename TPipeNetwork>
+			Network& pipe(Network& network) {
+				network.input(resolve());
+				return network;
+			}
+			#pragma endregion
+
+			// Operators
+
+			template<typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+			friend Network& operator>>(std::vector<T> lhs, Network& rhs) {
+				rhs.input(lhs);
+				return rhs;
+			}
+			inline Network& operator>>(Network& rhs) {
+				return pipe(rhs);
+			}
+
+
+
+		private:
+
+			// Events
+			#pragma region
+			//inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Link::OnEvent)); }
+
+			void OnEvent(const Soren::Event& e) {
+				if (!mRunning) return;
+				EventDispatcher dispatcher(e);
+
+				//dispatcher.Dispatch<NetworkCreatedEvent>(BIND_EVENT_FN(Network::Init)); <- Might be virtuals
+				//dispatcher.Dispatch<NetworkClosedEvent>(BIND_EVENT_FN());
+				//SOREN_CORE_TRACE(e);
+				return;
+
+			};
+			#pragma endregion
+
+			//size_t mId;
+
+			bool mRunning = true; // So as to allow links to be disabled and enabled
+			bool mLocked = false;
+
+			//std::function<TValue(const TValue)> mActivation = Activation::Identity<TValue>;
+
+			std::map<size_t, std::shared_ptr<Layer<TValue,TBias,TWeight>>> mLayers{};
+
+		};
+
+
+	} // namespace Neural
 } // namespace Soren

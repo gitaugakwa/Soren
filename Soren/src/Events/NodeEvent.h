@@ -1,25 +1,26 @@
 #pragma once
 
 #include "Event.h"
-#include "Type.h"
 
-#include <sstream>
 #include <string>
+#include <sstream>
 
 namespace Soren {
+
+
 
 	class SOREN_API NodeCreatedEvent : public Event
 	{
 	public:
-		NodeCreatedEvent(const size_t id, const std::string& name, const size_t layerid)
-			: m_ID(id), m_LayerID(layerid), m_Title(name) {}
+		NodeCreatedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeCreatedEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " LayerID[" << m_LayerID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " LayerID[" << m_LayerID << "]";
 			return ss.str();
 		}
 
@@ -27,22 +28,22 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID, m_LayerID;
-		const std::string m_Title;
+		//const size_t m_ID, m_LayerID;
+		//const std::string m_Title;
 	};
 
 	class SOREN_API NodeDeletedEvent : public Event
 	{
 	public:
-		NodeDeletedEvent(const size_t id, const std::string& name, const size_t layerid)
-			: m_ID(id), m_LayerID(layerid), m_Title(name) {}
+		NodeDeletedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeDeletedEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " LayerID[" << m_LayerID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " LayerID[" << m_LayerID << "]";
 			return ss.str();
 		}
 
@@ -50,22 +51,20 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID, m_LayerID;
-		const std::string m_Title;
 	};
 
 	class SOREN_API NodeResetEvent : public Event
 	{
 	public:
-		NodeResetEvent(const size_t id, const std::string& name, const size_t size)
-			: m_ID(id), m_Size(size), m_Title(name) {}
+		NodeResetEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeResetEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " (Links Reset -> " << m_Size << ")";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " (Links Reset -> " << m_Size << ")";
 			return ss.str();
 		}
 
@@ -73,22 +72,22 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID, m_Size;
-		const std::string m_Title;
+		//const size_t m_ID, m_Size;
+		//const std::string m_Title;
 	};
 	
 	class SOREN_API NodeClearedEvent : public Event
 	{
 	public:
-		NodeClearedEvent(const size_t id, const std::string& name, const size_t size)
-			: m_ID(id), m_Title(name), m_Size(size) {}
+		NodeClearedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeClearedEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " (Links Cleared -> " << m_Size << ")";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " (Links Cleared -> " << m_Size << ")";
 			return ss.str();
 		}
 
@@ -96,21 +95,21 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID, m_Size;
-		const std::string m_Title;
+		//const size_t m_ID, m_Size;
+		//const std::string m_Title;
 	};
 	
 	class SOREN_API NodeDisabledEvent : public Event
 	{
 	public:
-		NodeDisabledEvent(const size_t id, const std::string& name)
-		: m_ID(id), m_Title(name) {}
+		NodeDisabledEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeDisabledEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
 			return ss.str();
 		}
 
@@ -118,21 +117,21 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID;
-		const std::string m_Title;
+		//const size_t m_ID;
+		//const std::string m_Title;
 	};
 
 	class SOREN_API NodeEnabledEvent : public Event
 	{
 	public:
-		NodeEnabledEvent(const size_t id, const std::string& name)
-			: m_ID(id), m_Title(name) {}
+		NodeEnabledEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeEnabledEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
 			return ss.str();
 		}
 
@@ -140,110 +139,111 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID;
-		const std::string m_Title;
+		//const size_t m_ID;
+		//const std::string m_Title;
 	};
 	
 
 	class SOREN_API NodeCopiedEvent : public Event
 	{
 	public:
-		NodeCopiedEvent(const size_t id, const std::string& title, const size_t size)
-			: m_ID(id), m_Size(size), m_Title(title) {}
+		NodeCopiedEvent(size_t inId, size_t outId)
+			: mInId(inId), mOutId(outId) {}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeCopiedEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " (Size: " << m_Size << ")";
+			ss << "[" << mInId << "]" << " -> " << "[" << mOutId << "]";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " (Size: " << m_Size << ")";
 			return ss.str();
 		}
 
 		EVENT_CLASS_TYPE(NodeCopied)
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 	private:
-		const size_t m_ID, m_Size;
-		const std::string m_Title;
+		const size_t mInId,mOutId;
+		//const std::string m_Title;
 	};
 
 	class SOREN_API NodeCopyAssignedEvent : public Event
 	{
 	public:
-		NodeCopyAssignedEvent(const size_t outid, const size_t inid, const std::string& outtitle, const std::string& intitle, const size_t size)
-			: m_OutID(outid), m_InID(inid), m_Size(size), m_OutTitle(outtitle), m_InTitle(intitle) {}
+		NodeCopyAssignedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeCopyAssignedEvent: ";
-			ss << m_InTitle << "[" << m_InID << "]" << " <- " << m_OutTitle << "[" << m_OutID << "]";
-			ss << " (Size: " << m_Size << ")";
+			//ss << m_InTitle << "[" << m_InID << "]" << " <- " << m_OutTitle << "[" << m_OutID << "]";
+			//ss << " (Size: " << m_Size << ")";
 			return ss.str();
 		}
 
 		EVENT_CLASS_TYPE(NodeCopyAssigned)
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 	private:
-		const size_t m_OutID, m_InID, m_Size;
-		const std::string m_OutTitle, m_InTitle;
+		//const size_t m_OutID, m_InID, m_Size;
+		//const std::string m_OutTitle, m_InTitle;
 	};
 
 	class SOREN_API NodeMovedEvent : public Event
 	{
 	public:
-		NodeMovedEvent(const size_t id, const std::string& title, const size_t size)
-			: m_ID(id), m_Size(size), m_Title(title) {}
+		NodeMovedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeMovedEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
-			ss << " (Size: " << m_Size << ")";
+			//ss << m_Title << "[" << m_ID << "]";
+			//ss << " (Size: " << m_Size << ")";
 			return ss.str();
 		}
 
 		EVENT_CLASS_TYPE(NodeMoved)
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 	private:
-		const size_t m_ID, m_Size;
-		const std::string m_Title;
+		//const size_t m_ID, m_Size;
+		//const std::string m_Title;
 	};
 
 	class SOREN_API NodeMoveAssignedEvent : public Event
 	{
 	public:
-		NodeMoveAssignedEvent(const size_t outid, const size_t inid, const std::string& outtitle, const std::string& intitle, const size_t size)
-			: m_OutID(outid), m_InID(inid), m_Size(size), m_OutTitle(outtitle), m_InTitle(intitle) {}
+		NodeMoveAssignedEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeMoveAssignedEvent: ";
-			ss << m_InTitle << "[" << m_InID << "]" << " <- " << m_OutTitle << "[" << m_OutID << "]";
-			ss << " (Size: " << m_Size << ")";
+			//ss << m_InTitle << "[" << m_InID << "]" << " <- " << m_OutTitle << "[" << m_OutID << "]";
+			//ss << " (Size: " << m_Size << ")";
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(NodeCopyAssigned)
+		EVENT_CLASS_TYPE(NodeMoveAssigned)
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 	private:
-		const size_t m_OutID, m_InID, m_Size;
-		const std::string m_OutTitle, m_InTitle;
+		//const size_t m_OutID, m_InID, m_Size;
+		//const std::string m_OutTitle, m_InTitle;
 	};
 
 	class SOREN_API NodeActiveEvent : public Event
 	{
 	public:
-		NodeActiveEvent(const size_t id, const std::string& name)
-			: m_ID(id), m_Title(name) {}
+		NodeActiveEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeActiveEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
 			return ss.str();
 		}
 
@@ -251,21 +251,21 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID;
-		const std::string m_Title;
+		//const size_t m_ID;
+		//const std::string m_Title;
 	};
 
 	class SOREN_API NodeInactiveEvent : public Event
 	{
 	public:
-		NodeInactiveEvent(const size_t id, const std::string& name)
-			: m_ID(id), m_Title(name) {}
+		NodeInactiveEvent()
+			{}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NodeInactiveEvent: ";
-			ss << m_Title << "[" << m_ID << "]";
+			//ss << m_Title << "[" << m_ID << "]";
 			return ss.str();
 		}
 
@@ -273,8 +273,8 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNode)
 
 	private:
-		const size_t m_ID;
-		const std::string m_Title;
+		//const size_t m_ID;
+		//const std::string m_Title;
 	};
 
 	//class SOREN_API NodeStatusChangeEvent : public Event

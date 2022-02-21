@@ -40,9 +40,6 @@
     <Filter Include="Test">
       <UniqueIdentifier>{45DC8C7C-3113-8E0D-DAFF-7310C6150A0F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Train">
-      <UniqueIdentifier>{43382F0E-AF4C-57BF-78CE-FA1EE4A153F0}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Activation\Activation.h">
@@ -92,13 +89,10 @@
     <ClInclude Include="src\Layer\Layer.h">
       <Filter>Layer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Layer\layData.h">
-      <Filter>Layer</Filter>
-    </ClInclude>
     <ClInclude Include="src\Link\Link.h">
       <Filter>Link</Filter>
     </ClInclude>
-    <ClInclude Include="src\Link\linkData.h">
+    <ClInclude Include="src\Link\Linker.h">
       <Filter>Link</Filter>
     </ClInclude>
     <ClInclude Include="src\Log\Log.h">
@@ -108,22 +102,16 @@
     <ClInclude Include="src\Network\Network.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="src\Network\netData.h">
-      <Filter>Network</Filter>
-    </ClInclude>
     <ClInclude Include="src\Node\Node.h">
-      <Filter>Node</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Node\nodeData.h">
       <Filter>Node</Filter>
     </ClInclude>
     <ClInclude Include="src\Output\Output.h">
       <Filter>Output</Filter>
     </ClInclude>
-    <ClInclude Include="src\Soren.h" />
     <ClInclude Include="src\Random\Random.h">
       <Filter>Random</Filter>
     </ClInclude>
+    <ClInclude Include="src\Soren.h" />
     <ClInclude Include="src\Status\Status.h">
       <Filter>Status</Filter>
     </ClInclude>
@@ -132,11 +120,8 @@
     </ClInclude>
     <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\Timer.h" />
-    <ClInclude Include="src\Train\Train.h">
-      <Filter>Train</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Type.h" />
     <ClInclude Include="src\sorenpch.h" />
+    <ClInclude Include="src\Link\Linking.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Activation\Activation.cpp">
@@ -148,119 +133,8 @@
     <ClCompile Include="src\Input\Input.cpp">
       <Filter>Input</Filter>
     </ClCompile>
-    <ClCompile Include="src\Layer\Layer.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layEvent.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layFile.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layInput.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layLink.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layNetwork.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layNode.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layOutput.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layer\layStatus.cpp">
-      <Filter>Layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\Link.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkEvent.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkFile.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkInput.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkLayer.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkNetwork.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkNode.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkOutput.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Link\linkStatus.cpp">
-      <Filter>Link</Filter>
-    </ClCompile>
     <ClCompile Include="src\Log\Log.cpp">
       <Filter>Log</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\NetFile.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\Network.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netEvent.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netInput.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netLayer.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netLink.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netNode.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netOutput.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netStatus.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Network\netSync.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\Node.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeEvent.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeFile.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeInput.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeLayer.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeLink.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeNetwork.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeOutput.cpp">
-      <Filter>Node</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Node\nodeStatus.cpp">
-      <Filter>Node</Filter>
     </ClCompile>
     <ClCompile Include="src\Output\Output.cpp">
       <Filter>Output</Filter>
@@ -273,9 +147,6 @@
     </ClCompile>
     <ClCompile Include="src\Test\Test.cpp">
       <Filter>Test</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Train\Train.cpp">
-      <Filter>Train</Filter>
     </ClCompile>
     <ClCompile Include="src\sorenpch.cpp" />
   </ItemGroup>

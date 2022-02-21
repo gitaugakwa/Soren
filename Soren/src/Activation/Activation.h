@@ -2,8 +2,6 @@
 #include "Core.h"
 #include <cmath>
 
-#include "Type.h"
-
 // Identity
 // Binary step
 // Sigmoid
@@ -42,12 +40,13 @@ namespace Soren {
 
 		enum class ActivationFunc
 		{
-			Identity, BinaryStep, Sigmoid, TanH, SQNL,
+			Identity, BinaryStep, Sigmoid, Logistic, SoftSTep, TanH, SQNL,
 			ArcTan, ArSinH, ElliotSig, ISRU, ISRLU,
 			PLU, ReLU, BReLU, LeakyReLU, PReLU,
 			RReLU, GELU, ELU, SELU, SReLU,
-			APL, SoftPlus, BentIdentity, SiLU, SoftExponential,
-			SoftClipping, Sinusoid, Sinc, Gaussian, SQRBF
+			APL, SoftPlus, BentIdentity, SoftExponential,
+			SoftClipping, Sinusoid, Sinc, Gaussian, SQRBF, SiLU, SiL,
+			SoftMax, MaxOut, DropOut
 		};
 
 		// not sure to take in by reference or value
@@ -65,7 +64,7 @@ namespace Soren {
 		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
 		static constexpr T BinaryStep(const T data)
 		{
-			return (T)(data >= 0 ? 1 : 0);
+			return std::clamp<T>(data, 0, 1);
 		}
 
 		// Sigmoid
@@ -74,6 +73,20 @@ namespace Soren {
 		{
 			// Always signed??
 			return (T)(1 / (1 + std::exp(-data)));
+		}
+
+		// Logistic
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T Logistic(const T data)
+		{
+			return Sigmoid(data);
+		}
+
+		// SoftStep
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T SoftStep(const T data)
+		{
+			return Sigmoid(data);
 		}
 
 		// TanH
@@ -157,22 +170,22 @@ namespace Soren {
 		}
 
 		// ISRU
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T ISRU(const T data, const Gradient_t gradient = 1)
+		template <typename TData,typename TGradient = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData ISRU(const TData data, const TGradient gradient = 1)
 		{
 			return (T)(data / std::sqrt(1 + (gradient * std::pow(data, 2))));
 		}
 
 		// ISRLU
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T ISRLU(const T data, const Gradient_t gradient = 1)
+		template <typename TData, typename TGradient, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData ISRLU(const TData data, const TGradient gradient = 1)
 		{
 			return (T)(data < 0 ? (data / std::sqrt(1 + (gradient * std::pow(data, 2)))) : data);
 		}
 
 		// PLU
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T PLU(const T data, const Gradient_t gradient = 0.1, const Variance_t variance = 1)
+		template <typename TData, typename TGradient = TData, typename TVariance = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData PLU(const TData data, const TGradient gradient = 0.1, const TVariance variance = 1)
 		{
 			return (T)(std::max(((gradient * ((const double&)data + variance)) - variance),
 				(std::min((gradient * ((const double&)data - variance) + variance), (const double&)data))));
@@ -182,7 +195,7 @@ namespace Soren {
 		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
 		static constexpr T ReLU(const T data)
 		{
-			return (T)(data <= 0 ? 0 : data);
+			return std::max<T>(0, data);
 		}
 
 		// BReLU
@@ -199,8 +212,8 @@ namespace Soren {
 
 		// PReLU
 		// Defaults to LeakyReLU gradient
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T PReLU(const T data, const Gradient_t gradient = 0.01)
+		template <typename TData,typename TGredient = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData PReLU(const TData data, const TData gradient = 0.01)
 		{
 			return (T)(data < 0 ? (gradient * data) : data);
 		}
@@ -213,15 +226,19 @@ namespace Soren {
 		}
 
 		// ELU
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T ELU(const T data, const Gradient_t gradient = 1)
+		template <typename TData,typename TGradient = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData ELU(const TData data, const TGradient gradient = 1)
 		{
 			return (T)(data <= 0 ? (gradient * (std::exp(data) - 1)) : data);
 		}
 
 		// SELU
-		//template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		//T SELU(T data);
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T SELU(T data)
+		{
+			return (T)(1.0507 * (data < 0 ? (1.67326 * (std::exp(data) - 1)) : data));
+
+		}
 
 		// SoftPlus
 		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
@@ -231,16 +248,16 @@ namespace Soren {
 		}
 
 		// BentIdentity
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T BentIdentity(const T data, const Gradient_t gradient = 1)
+		template <typename TData, typename TGradient = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData BentIdentity(const TData data, const TGradient gradient = 1)
 		{
 			return (T)((((gradient * std::sqrt(std::pow(data, 2) + 1)) - gradient) / 2) + data);
 		}
 
 		// SoftClipping
 		// Fix
-		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
-		static constexpr T SoftClipping(const T data, const Gradient_t gradient = 1)
+		template <typename TData, typename TGradient = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr TData SoftClipping(const TData data, const TGradient gradient = 1)
 		{
 			return (T)((1 / gradient) * (std::log((1 + std::exp(gradient * data)) / 
 				(1 + std::exp(gradient * (data - 1))))));
@@ -265,6 +282,67 @@ namespace Soren {
 		static constexpr T Gaussian(const T data)
 		{
 			return (T)(std::exp(-(std::pow(data, 2))));
+		}
+		
+		// SiLU
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T SiLU(const T data)
+		{
+			return (T)(data / (1 + std::exp(-data)));
+		}
+		
+		// SiL
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T SiL(const T data)
+		{
+			return SiLU(data);
+		}
+		
+		// SoftMax
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr std::vector<T> SoftMax(const std::vector<T> data)
+		{
+			std::vector<T> expVec(data.size());
+			std::vector<T> valueVec(data.size());
+			T totalExp = 0;
+
+			for (size_t iValue = 0; iValue < data.size(); iValue++) {
+				auto exp = std::exp(data[iValue]);
+
+				expVec[iValue] = exp;
+				totalExp += exp;
+			}
+
+			for (size_t iValue = 0; iValue < data.size(); iValue++) {
+				valueVec[iValue] = (expVec[iValue] / totalExp);
+			}
+
+			return valueVec ;
+		}
+
+		// MaxOut
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		static constexpr T MaxOut(const std::vector<T> data)
+		{
+			return *std::max_element(data.begin(), data.end());
+		}
+
+		// DropOut
+		template <typename TData, typename TRate = TData, std::enable_if_t<std::is_integral<TData>::value || std::is_floating_point<TData>::value, int> = 0>
+		static constexpr std::vector<TData> DropOut(const std::vector<TData> data, TRate rate)
+		{
+			std::vector<TData> valueVec(data.size());
+
+			for (size_t iValue = 0; iValue < data.size(); iValue++) {
+				if (Random::Double(0, 1) < rate) {
+					valueVec[iValue] = 0;
+				}
+				else {
+					valueVec[iValue] = data[iValue] / rate;
+				}
+			}
+
+			return valueVec;
 		}
 
 	};

@@ -2,10 +2,7 @@
 #include "Core.h"
 #include "Base.h"
 
-#include "nodeData.h"
-
 #include "Status/Status.h"
-#include "Type.h"
 
 #include "Log/Log.h"
 #include "Events/Event.h"
@@ -17,173 +14,282 @@
 namespace Soren {
 
 	template <typename T>
-	class FileInput;
-	template <typename T>
 	class FileOutput;
+	template <typename T>
+	class FileInput;
 
-	class Event;
+	namespace Neural {
 
-namespace Neural {
+		class Event;
 
-	class SOREN_API Layer;
-	class SOREN_API Link;
-	class SOREN_API Network;
+		struct Linkable;
+		template<typename TWeight>
+		class Linker;
 
-	class SOREN_API Node //: public Write
-	{
-		friend class Link;
-		friend class Layer;
-		friend class Network;
+		class BaseNode:public Linkable {
+			template<typename TValue, typename TBias, typename TWeight>
+			friend class Layer;
 
-		friend class Train;
-	public:
-		Node(Layer& layer, const std::string& name = "Node");
-		~Node();
+		public:
+			BaseNode():mId{sId++} {};
+			~BaseNode() {};
 
-		// Nodes
-		size_t size() const;
-		inline std::string title() const { return m_Title; }
-		inline size_t id() const { return m_NodeID; }
-		inline Node_t value() const { return m_Value; }
-		inline Bias_t bias() const { return m_Bias; }
-		inline size_t LayerID() const { return m_LayerID; }
-		inline bool running() const { return m_Running; }
-		inline bool locked() const { return m_Locked; }
-		inline Layer& layer() const;
+			inline size_t id() const override { return mId; }
 
-		void clear();
+			BaseNode& pipe(BaseNode& layer);
+			template<typename TValue, typename TBias>
+			typename std::common_type<TValue, TBias>::type output() const;
+			template<typename TInputValue>
+			BaseNode& input(TInputValue& value);
+			template<typename TInputValue>
+			BaseNode& input(TInputValue&& value);
 
-		void halt();
-		void resume();
+			// Special member functions
+			#pragma region
+			BaseNode(const BaseNode&)
+				: mId(sId++) {};
+			BaseNode(BaseNode&& arg) noexcept
+				: mId(std::exchange(arg.mId, 0)) {};
+			BaseNode& operator=(const BaseNode&) {
+				mId = sId++;
+				return *this;
+			};
+			BaseNode& operator=(BaseNode&& arg) noexcept {
+				mId = std::move(arg.mId);
+				return *this;
+			};
+			#pragma endregion
 
-		void reset();
 
-		inline void title(const std::string& title) { if (m_Locked) return; m_Title = title; }
-		inline void bias(Bias_t bias) { if (m_Locked) return; m_Bias = bias; }
-		inline void value(Node_t value) { if (m_Locked) return; m_Value = value; }
-		inline void lock(bool lock) { m_Locked = lock; }
-		inline void lock() { m_Locked = true; }
-		inline void unlock() { m_Locked = false; }
+		protected:
 
-		// Callbacks
-		void SetEventCallbackFunction(const EventCallbackFn& callback);
-		inline void DefaultCallbacks() { m_Callbacks.Default(); }
-		void DeleteEventCallback(const EventType& type);
+			inline static size_t sId = 1;
+			size_t mId;
+		};
 
-		// OnEvent functions
-		void AddEvent(const EventType& type, void(*func)(const Event&));
-		void DeleteEvent(const EventType& type, void(*func)(const Event&));
-		void DeleteEvent(const EventType& type, const unsigned int& number);
 
-		// Links
-		//std::vector<Link*>& Links(const std::initializer_list<Node&>& nodes);
-		Accessor<Link>& Links(const std::initializer_list<Node*>& nodes);
-		Accessor<Link>& Links(const Node& node);
-		Accessor<Link>& Links(const Node* node);
-		Accessor<Link>& Links(const Layer& layer);
-		Accessor<Link>& Links(const Layer* layer);
-
-		inline std::vector<Link>& GetAllLinks() { return m_Links; }
-		Link& GetLink(const Node& node);
-
-		void DeleteLink(const Node& node);
-		void DeleteLink(const Link& link);
-
-		bool LinkCreated(const Node& node) const;
-
-		// Link function implementation
-		Node_t Resolve();
-
-		Accessor<Link> NodeLinks{};
-
-		//TODO
-		//~Node();
-
-		std::string str(const std::string& nodepref = "", const std::string& nodesuf = "", const std::string& linkpref = "", const std::string& linksuf = "") const;
-
-		//Members
-
-		// Input
-		bool Import(FileInput<Input_t>& fi, const ImportType importtype = ImportType::Normal, const bool override = true, const bool cascade = true);
-		bool Import(const nlohmann::json& j, const bool override = true, const bool cascade = true);
-
-		// Output
-		bool Export(FileOutput<Output_t>& fo, const ExportType exporttype = ExportType::Normal, const bool cascade = true) const;
-
-		// Public callbacks
-		inline void SetNodeEventfunc(const EventType& type, NodeEventfunc func);
-
-		// Special member functions
-		Node(const Node& arg);
-		Node(Node&& arg) noexcept;
-		Node& operator=(const Node& arg);
-		Node& operator=(Node&& arg) noexcept;
-
-		// Operators
-		Link& operator[](size_t rhs);
-		bool operator==(const Node& rhs) const;
-		bool operator==(size_t rhs) const;
-		bool operator!=(const Node& rhs) const;
-		bool operator!=(size_t rhs) const;
-		friend std::ostream& operator<<(std::ostream& os, const Node& e);
-		template <typename T>
-		friend FileOutput<T>& operator<<(FileOutput<T>& fos, const Node& node)
+		template<typename TValue = double, typename TBias = TValue, typename TWeight = TValue>
+		class SOREN_API Node : public EventEmmiter, public BaseNode // Should be NodeEvent
 		{
-			fos << node.str("","","\t");
-			return fos;
-		}
 
-	private:
+			template<typename TValue, typename TBias, typename TWeight>
+			friend class Node;
+			template<typename TValue, typename TBias, typename TWeight>
+			friend class Layer;
+		public:
 
-		// Event
-		inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Node::OnEvent)); }
-		void CheckAdditionalEvents(const Event& e);
-		void OnEvent(const Soren::Event& e);
+			Node(TBias bias = 0, TValue value = 0)
+				: mBias{ bias }, mValue{ value }
+			{
+				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
 
-		// File
-		bool SeekBegin(Soren::FileInput<Input_t>& fi);
-		bool SeekEnd(Soren::FileInput<Input_t>& fi);
+				//Bind();
 
-		// Const mambers
+				NodeCreatedEvent event{};
+				Emit(event);
+			};
+			Node(std::function<TValue(const typename std::common_type<TValue, TBias>::type)> activation, TBias bias = 0, TValue value = 0)
+				: mActivation{ activation }, mBias{ bias }, mValue{ value }
+			{
+				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
 
-		// store position in vector cause all pointers in vector get invalidated after resize
-		// do we want position to be stored in layer or always to be derived from network
-		// what if the layer moves???
-		// should layer id == to layer pos -> first layer == 0(id), 0(pos) what if layer insert that would change this ordering
-		// 
+				//Bind();
 
-		// Network
-		Network& network();
+				NodeCreatedEvent event{};
+				Emit(event);
+			};
+			~Node() {
+				NodeDeletedEvent event{};
+				Emit(event);
+			};
 
-		// Data
+			//inline size_t id() const override { return mId; }
+			inline TValue value() const { return mValue; }
+			inline TBias bias() const { return mBias; }
+			inline bool running() const { return mRunning; }
+			inline bool locked() const { return mLocked; }
 
-		const size_t m_LayerID;
-		const size_t m_NodeID;
-		std::string m_Title{};
-		bool m_Running = true;
-		bool m_Locked = false;
+			void clear() {
+				if (mLocked) return;
 
-		Layer& m_Layer;
+				const weight = mBias;
+				mBias = NULL;
 
-		//std::vector<unsigned int> ScopeIDs;
+				NodeClearedEvent event{};
+				Emit(event);
 
-		std::vector<Link> m_Links{};
+				// Reset Activation function if stored by Link
+			};
 
-		Node_t m_Value = 0;
-		Bias_t m_Bias = 0;
+			void halt() {
 
-		// Export
-		// move to network
+				//const running = m_Running;
+				mRunning = FALSE;
 
-		const std::string m_OpeningTag = "<Node>";
-		const std::string m_ClosingTag = "</Node>";
+				NodeDisabledEvent event{};
+				Emit(event);
 
-		NodeCallbacks m_Callbacks{};
-		NodeEvents m_Events{};
-	};
+			};
+			void resume() {
+				mRunning = TRUE;
 
-	void to_json(nlohmann::json& j, const Node& node);
-	void from_json(const nlohmann::json& j, Node& node);
-} // namespace Neural
+				NodeEnabledEvent event{};
+				Emit(event);
+			};
+
+			void reset() {
+				NodeResetEvent event(mBias);
+				Emit(event);
+			};
+
+			inline void value(TValue value) { if (mLocked) return; mValue = value; }
+			inline void bias(TBias bias) { if (mLocked) return; mBias = bias; }
+			inline void lock(bool lock) { mLocked = lock; }
+			inline void lock() { mLocked = true; }
+			inline void unlock() { mLocked = false; }
+
+			template<typename TWeight>
+			inline Link<TWeight> link(TWeight weight) {
+				return Link<TWeight>(weight);
+				//return (Link<TWeight>&)mLinker.link<Link<TWeight>>(*this, node, weight);
+			}
+
+			template<typename TInputValue = TValue>
+			inline Node& input(TInputValue value) {
+				mValue = static_cast<TValue>(value);
+				return *this;
+			}
+
+			template<typename TValue = TValue, typename TBias = TBias>
+			inline typename std::common_type<TValue, TBias>::type output() const {
+				return mActivation((mValue + mBias));
+			}
+			
+			inline typename std::common_type<TValue, TBias>::type resolve() const {
+				return mActivation((mValue + mBias));
+			}
+
+			template <typename TPipeNode>
+			inline Node& pipe(std::unique_ptr<Node<TPipeNode>> node) {
+				return node.input(resole());
+			}
+
+			// Special member functions
+			#pragma region
+			Node(const Node& arg)
+				: BaseNode(arg),
+				mValue(arg.mValue),
+				mBias(arg.mBias),
+				//mId(sId++),
+				mRunning(arg.mRunning),
+				mLocked(arg.mLocked),
+				mActivation(arg.mActivation)
+			{
+				NodeCopiedEvent event{arg.mId, mId};
+				Emit(event);
+			};
+			Node(Node<TValue, TBias, TWeight>&& arg) noexcept
+				: BaseNode(std::move(arg)),
+				mValue(std::exchange(arg.mValue, static_cast<TValue>(0))),
+				mBias(std::exchange(arg.mBias, static_cast<TBias>(0))),
+				//mId(std::exchange(arg.mId, 0)),
+				mRunning(std::exchange(arg.mRunning, false)),
+				mLocked(std::exchange(arg.mLocked, true)),
+				mActivation(std::exchange(arg.mActivation, Activation::Identity<TValue>))
+			{
+				NodeMovedEvent event{};
+				Emit(event);
+			};
+			Node& operator=(const Node& arg) {
+				BaseNode::operator=(arg)
+					//if (*this == arg) return *this;
+
+				mValue = arg.mValue;
+				mBias = arg.mBias;
+				mRunning = arg.mRunning;
+				mLocked = arg.mLocked;
+				mActivation = arg.mActivation;
+				//mId = sId++;
+
+				NodeCopyAssignedEvent event{};
+				Emit(event);
+
+				return *this;
+			};
+			Node& operator=(Node&& arg) noexcept {
+				BaseNode::operator=(arg)
+
+				mValue = std::move(arg.mValue);
+				mBias = std::move(arg.mBias);
+				mRunning = std::move(arg.mRunning);
+				mLocked = std::move(arg.mLocked);
+				mActivation = std::move(arg.mActivation);
+				//mId = std::move(arg.mId);
+
+				NodeMoveAssignedEvent event{};
+				Emit(event);
+				return *this;
+			};
+			#pragma endregion
+
+
+			// Operators
+			#pragma region
+			template<typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+			friend Node& operator>>(T lhs, Node& rhs) {
+				return rhs.input(lhs);
+			}
+			inline Node& operator>>(Node& rhs) {
+				return pipe(rhs);
+			}
+			template<typename TWeight>
+			inline auto operator>>(Link<TWeight>& rhs) {
+				return rhs.input(resolve());
+				//return rhs;
+			}
+			//template<typename T>
+			//inline T& operator>>(T& rhs) {
+			//	rhs = output();
+			//	return rhs;
+			//}
+			template<typename TRightValue,typename TRightBias, typename TRightWeight>
+			bool operator==(const Node<TRightValue, TRightBias, TRightWeight>& rhs) const {
+				return mId == rhs.mId;
+			}
+			/*friend bool operator==(Node& lhs, Linkable& rhs) {
+				return lhs.mId == rhs.id();
+			}*/
+			#pragma endregion
+
+
+		private:
+
+			// Events
+			#pragma region
+			//inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Link::OnEvent)); }
+
+			void OnEvent(const Soren::Event& e) {
+				if (!mRunning) return;
+				EventDispatcher dispatcher(e);
+
+				//dispatcher.Dispatch<NetworkCreatedEvent>(BIND_EVENT_FN(Node::Init)); <- Might be virtuals
+				//dispatcher.Dispatch<NetworkClosedEvent>(BIND_EVENT_FN());
+				//SOREN_CORE_TRACE(e);
+				return;
+
+			};
+			#pragma endregion
+
+			//size_t mId;
+
+			bool mRunning = true; // So as to allow links to be disabled and enabled
+			bool mLocked = false;
+
+			std::function<TValue(const TValue)> mActivation = Activation::Identity<TValue>;
+			TValue mValue= 0;
+			TBias mBias = 0;
+		};
+
+
+	} // namespace Neural
 } // namespace Soren
-

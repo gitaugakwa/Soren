@@ -1,4 +1,4 @@
-#include "olpch.h"
+#include "sorenpch.h"
 #include "Status/Status.h"
 
 // Status
@@ -85,7 +85,7 @@ void NetworkStatus::SetStatus(const StatusCategory& status)
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid StatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid StatusCategory type");
 		assert(false);
 	}
 	}
@@ -213,7 +213,7 @@ bool NetworkStatus::IsInCategory(const std::initializer_list<StatusCategory>& st
 		}
 		default:
 		{
-			OL_CORE_ERROR("Enter Valid StatusCategory type");
+			SOREN_CORE_ERROR("Enter Valid StatusCategory type");
 			assert(false);
 			return false;
 		}
@@ -266,7 +266,7 @@ bool NetworkStatus::IsInCategory(const StatusCategory& status) const
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid StatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid StatusCategory type");
 		assert(false);
 		return false;
 	}
@@ -350,7 +350,7 @@ void InputStatus::SetStatus(const InputStatusCategory& status)
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid InputStatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid InputStatusCategory type");
 		assert(false);
 	}
 	}
@@ -451,7 +451,7 @@ bool InputStatus::IsInCategory(const std::initializer_list<InputStatusCategory>&
 		}
 		default:
 		{
-			OL_CORE_ERROR("Enter Valid InputStatusCategory type");
+			SOREN_CORE_ERROR("Enter Valid InputStatusCategory type");
 			assert(false);
 			return false;
 		}
@@ -496,7 +496,7 @@ bool InputStatus::IsInCategory(const InputStatusCategory& status) const
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid InputStatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid InputStatusCategory type");
 		assert(false);
 		return false;
 	}
@@ -578,7 +578,7 @@ void OutputStatus::SetStatus(const OutputStatusCategory& status)
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid OutputStatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid OutputStatusCategory type");
 		assert(false);
 	}
 	}
@@ -679,7 +679,7 @@ bool OutputStatus::IsInCategory(const std::initializer_list<OutputStatusCategory
 		}
 		default:
 		{
-			OL_CORE_ERROR("Enter Valid OutputStatusCategory type");
+			SOREN_CORE_ERROR("Enter Valid OutputStatusCategory type");
 			assert(false);
 			return false;
 		}
@@ -724,7 +724,7 @@ bool OutputStatus::IsInCategory(const OutputStatusCategory& status) const
 	}
 	default:
 	{
-		OL_CORE_ERROR("Enter Valid OutputStatusCategory type");
+		SOREN_CORE_ERROR("Enter Valid OutputStatusCategory type");
 		assert(false);
 		return false;
 	}

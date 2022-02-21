@@ -208,12 +208,12 @@ namespace Soren
 			if (filename != m_path) {
 				newFile = true;
 				if (!m_name.empty()) {
-					OL_CORE_INFO("{0} (FileInput): Closing file {1}", m_name, m_path);
-					OL_CORE_INFO("{0} (FileInput): Openning file {1}", m_name, filename);
+					SOREN_CORE_INFO("{0} (FileInput): Closing file {1}", m_name, m_path);
+					SOREN_CORE_INFO("{0} (FileInput): Opening file {1}", m_name, filename);
 				}
 				else {
-					OL_CORE_INFO("FileInput: Closing file {0}", m_path);
-					OL_CORE_INFO("FileInput: Openning file {0}", filename);
+					SOREN_CORE_INFO("FileInput: Closing file {0}", m_path);
+					SOREN_CORE_INFO("FileInput: Opening file {0}", filename);
 				}
 			}
 
@@ -223,12 +223,12 @@ namespace Soren
 			if (mode != m_mode) {
 				newMode = true;
 				if (!m_name.empty()) {
-					OL_CORE_INFO("{0} (FileInput): Closing file {1} in mode {2}", m_name, m_path, m_mode);
-					OL_CORE_INFO("{0} (FileInput): Openning file {1} in mode {2}", m_name, filename, mode);
+					SOREN_CORE_INFO("{0} (FileInput): Closing file {1} in mode {2}", m_name, m_path, m_mode);
+					SOREN_CORE_INFO("{0} (FileInput): Opening file {1} in mode {2}", m_name, filename, mode);
 				}
 				else {
-					OL_CORE_INFO("FileInput: Closing file {0} in mode {1}", m_path, m_mode);
-					OL_CORE_INFO("FileInput: Openning file {0} in mode {1}", filename, mode);
+					SOREN_CORE_INFO("FileInput: Closing file {0} in mode {1}", m_path, m_mode);
+					SOREN_CORE_INFO("FileInput: Opening file {0} in mode {1}", filename, mode);
 				}
 				m_mode = mode;
 			}
@@ -452,19 +452,19 @@ namespace Soren
 		if (!m_ifstream.is_open() && !m_path.empty()) {
 			if (m_mode) {
 				if (!m_name.empty()) {
-					OL_CORE_INFO("{0} (FileInput): Openning file {1} in mode {2}", m_name, m_path, m_mode);
+					SOREN_CORE_INFO("{0} (FileInput): Openning file {1} in mode {2}", m_name, m_path, m_mode);
 				}
 				else {
-					OL_CORE_INFO("FileInput: Openning file {0} in mode {1}", m_path, m_mode);
+					SOREN_CORE_INFO("FileInput: Openning file {0} in mode {1}", m_path, m_mode);
 				}
 				m_ifstream.open(m_path, m_mode);
 			}
 			else {
 				if (!m_name.empty()) {
-					OL_CORE_INFO("{0} (FileInput): Openning file {1}", m_name, m_path);
+					SOREN_CORE_INFO("{0} (FileInput): Openning file {1}", m_name, m_path);
 				}
 				else {
-					OL_CORE_INFO("FileInput: Openning file {0}", m_path);
+					SOREN_CORE_INFO("FileInput: Openning file {0}", m_path);
 				}
 				m_ifstream.open(m_path);
 			}
@@ -472,10 +472,10 @@ namespace Soren
 		}
 		else {
 			if (!m_name.empty()) {
-				OL_CORE_WARN("{0} (FileInput): Function occured while unopened nor filepath given", m_name);
+				SOREN_CORE_WARN("{0} (FileInput): Function occured while unopened nor filepath given", m_name);
 			}
 			else {
-				OL_CORE_WARN("FileInput: Function occured while unopened nor filepath given");
+				SOREN_CORE_WARN("FileInput: Function occured while unopened nor filepath given");
 			}
 			return false;
 		}

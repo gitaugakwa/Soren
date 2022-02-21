@@ -3,7 +3,6 @@
 #include "Base.h"
 
 #include "Status/Status.h"
-#include "Type.h"
 
 #include "Log/Log.h"
 #include "Events/Event.h"
@@ -21,122 +20,213 @@ namespace Soren {
 
 namespace Neural {
 
-	class Node;
-
 	class Event;
 
-	class SOREN_API Link
+	class BaseLink {
+	protected:
+		inline static size_t sId = 1;
+	};
+
+	template<typename TWeight = double>
+	class SOREN_API Link : LinkerLink, public EventEmmiter, public BaseLink
 	{
-		friend class Node;
-		friend class Layer;
-		friend class Network;
+		//template<typename TValue, typename TBias>
+		//friend class Node;
+		template<typename TWeight>
+		friend class Linker;
 	public:
-		Link(Node& node, const Node& input);
-		~Link();
+
+		Link(TWeight weight = Random::Number<TWeight>())
+			: mWeight{ weight }, mId{ sId++ }
+		{
+			// SOREN_CORE_WARN("No Default Link Weight Limits Set");
+
+			//Bind();
+
+			LinkCreatedEvent event{};
+			Emit(event);
+		};
+		~Link() {
+			LinkDeletedEvent event{};
+			Emit(event);
+		};
 
 		// Links
-		inline size_t id() const { return m_LinkID; }
-		inline Weight_t weight() const { return m_Weight; }
-		inline bool running() const { return m_Running; }
-		inline bool locked() const { return m_Locked; }
-		inline size_t inID() const { return m_InID; }
-		inline size_t outID() const { return m_OutID; }
+		inline TWeight weight() const { return mWeight; }
+		inline bool running() const { return mRunning; }
+		inline bool locked() const { return mLocked; }
 
-		void clear();
+		void clear() {
+			if (mLocked) return;
 
-		void halt();
-		void resume();
+			const weight = mWeight;
+			mWeight = NULL;
 
-		void reset();
+			LinkClearedEvent event{};
+			Emit(event);
 
-		inline void weight(Weight_t weight) { if (m_Locked) return; m_Weight = weight; }
-		inline void lock(bool lock) { m_Locked = lock; }
-		inline void lock() { m_Locked = true; }
-		inline void unlock() { m_Locked = false; }
+			// Reset Activation function if stored by Link
+		};
 
-		inline void ChangeWeight(Weight_t difference) { if (m_Locked) return; m_Weight += difference; }
+		void halt() {
+
+			//const running = m_Running;
+			mRunning = FALSE;
+
+			LinkDisabledEvent event{};
+			Emit(event);
+
+		};
+		void resume() {
+			mRunning = TRUE;
+
+			LinkEnabledEvent event{};
+			Emit(event);
+		};
+
+		void reset() {
+			LinkResetEvent event{};
+			Emit(event);
+		};
+
+		inline void weight(TWeight weight) { if (mLocked) return; mWeight = weight; }
+		inline void lock(bool lock) { mLocked = lock; }
+		inline void lock() { mLocked = true; }
+		inline void unlock() { mLocked = false; }
 
 		// Callbacks
-		void SetEventCallbackFunction(const EventCallbackFn& callback);
-		void DefaultLinkCallbacks();
-		void DeleteEventCallback(const EventType& type);
+		//void SetEventCallbackFunction(const EventCallbackFn& callback);
 
+		// Events
+		#pragma region
 		// OnEvent functions
 		// Events added to links will be to all links
-		void AddEvent(const EventType& type, void(*func)(const Soren::Event&));
-		void DeleteEvent(const EventType& type, void(*func)(const Soren::Event&));
-		void DeleteEvent(const EventType& type, const unsigned int& number);
+		
+		#pragma endregion
 
-		std::string str(const std::string& linkpref = "", const std::string& linksuf = "") const;
+		std::string str(const std::string& linkpref = "", const std::string& linksuf = "") const {
+			std::stringstream ss;
 
-		// Import
-		bool Import(FileInput<Input_t>& fi, const ImportType importtype = ImportType::Normal, const bool override = true);
-		bool Import(const nlohmann::json& j, const bool override = true);
+			ss << linkpref;
+			ss << "Link[" << m_LinkID << "]";
+			ss << " Weight: " << std::setprecision(std::numeric_limits<TWeight>::digits10 + 1) << mWeight;
+			if (m_InBuffer)
+			{
+				ss << " InBuffer: " << m_InBuffer;
+			}
+			ss << linksuf;
+			ss << std::endl;
 
-		// Output
-		bool Export(FileOutput<Output_t>& fo, const ExportType exporttype = ExportType::Normal) const;
+			return ss.str();
+		};
 
-		// Public callbacks
-		void SetLinkEventfunc(const EventType& type, LinkEventfunc func);
+		//void SetLinkEventfunc(const EventType& type, LinkEventfunc func);
+		//inline EventEmmiter& emmiter() { return m_Emmitter; }
+
+		// Functional
+		template<typename TValue>
+		inline typename std::common_type<TWeight, TValue>::type pipe(TValue value) const {
+			return mWeight * value;
+		}
+
 
 		// Special member functions
-		Link(const Link& arg);
-		Link(Link&& arg) noexcept;
-		Link& operator=(const Link& arg);
-		Link& operator=(Link&& arg) noexcept;
+		#pragma region
+		Link(const Link& arg)
+			: mWeight(arg.mWeight),
+			mId(sId++),
+			mRunning(arg.mRunning),
+			mLocked(arg.mLocked)
+		{
+			LinkCopiedEvent event{};
+			Emit(event);
+		};
+		Link(Link&& arg) noexcept
+			: mWeight(std::exchange(arg.mWeight, 0)),
+			mId(std::exchange(arg.mId, 0)),
+			mRunning(std::exchange(arg.mRunning, false)),
+			mLocked(std::exchange(arg.mLocked, true))
+		{
+			LinkMovedEvent event{};
+			Emit(event);
+		};
+		Link& operator=(const Link& arg) {
+			if (*this == arg) return *this;
+
+			mWeight = arg.mWeight;
+			mRunning = arg.mRunning;
+			mLocked = arg.mLocked;
+			//mId = sId++;
+
+			LinkCopyAssignedEvent event{};
+			Emit(event);
+
+			return *this;
+		};
+		Link& operator=(Link&& arg) noexcept {
+
+			mWeight = std::move(arg.mWeight);
+			mRunning = std::move(arg.mRunning);
+			mLocked = std::move(arg.mLocked);
+			mId = std::move(arg.mId);
+
+			LinkMoveAssignedEvent event{};
+			Emit(event);
+			return *this;
+		};
+		#pragma endregion
 
 
 		// Operators
-		bool operator==(const Link& rhs) const;
-		bool operator==(const Node& rhs) const;
-		bool operator!=(const Link& rhs) const;
-		bool operator!=(const Node& rhs) const;
-		friend std::ostream& operator<<(std::ostream& os, const Link& link);
+		#pragma region
+		bool operator==(const Link& rhs) const {
+			return (m_LinkID == rhs.m_LinkID &&
+				mWeight == rhs.mWeight &&
+				mRunning == rhs.mRunning &&
+				mLocked == rhs.mLocked);
+		};
+		//bool operator==(const Node& rhs) const;
+		bool operator!=(const Link& rhs) const {
+			return !(*this == rhs);
+		};
+		//bool operator!=(const Node& rhs) const;
+		friend std::ostream& operator<<(std::ostream& os, const Link& link) {
+			return os << link.str();
+		};
 		template <typename T>
 		friend FileOutput<T>& operator<<(Soren::FileOutput<T>& fos, const Link& link)
 		{
 			fos << link.str();
 			return fos;
 		}
-
-		Node_t m_InBuffer = 0; // Not sure
+		#pragma endregion
 
 	private:
 
 		// Events
-		inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Link::OnEvent)); }
-		void CheckAdditionalEvents(const Soren::Event& e);
-		void OnEvent(const Soren::Event& e);
+		#pragma region
+		//inline void Bind() { SetEventCallbackFunction(BIND_EVENT_FN(Link::OnEvent)); }
+		
+		void OnEvent(const Soren::Event& e) {
+			if (!mRunning) return;
+			EventDispatcher dispatcher(e);
 
-		// File
-		bool SeekBegin(Soren::FileInput<Input_t>& fi);
-		bool SeekEnd(Soren::FileInput<Input_t>& fi);
+			//dispatcher.Dispatch<NetworkCreatedEvent>(BIND_EVENT_FN(Node::Init)); <- Might be virtuals
+			//dispatcher.Dispatch<NetworkClosedEvent>(BIND_EVENT_FN());
+			//SOREN_CORE_TRACE(e);
+			return;
 
-		// Data
-		const size_t m_LinkID;
+		};
+		#pragma endregion
 
-		// Network
-		Network& network();
+		size_t mId;
 
-		Weight_t m_Weight = 0;
+		bool mRunning = true; // So as to allow links to be disabled and enabled
+		bool mLocked = false;
 
-		bool m_Running = true; // So as to allow links to be disabled and enabled
-
-		size_t m_InID = 0;
-		size_t m_OutID = 0;
-		bool m_Locked = false;
-
-		Node& m_Node;
-
-		// Export
-		// move to network
-
-		const std::string m_OpeningTag = "<Link>";
-		const std::string m_ClosingTag = "</Link>";
+		TWeight mWeight = 0;
 	};
 
-	void to_json(nlohmann::json& j, const Link& link);
-	void from_json(const nlohmann::json& j, Link& link);
 
 } // namespace Neural
 } // namespace Soren

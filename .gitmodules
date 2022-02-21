@@ -6,3 +6,6 @@
 	path = Soren/Vendor/spdlog
 	url = https://github.com/gabime/spdlog
 	branch = master
+[submodule "Soren/Vendor/eigen"]
+	path = Soren/Vendor/eigen
+	url = https://gitlab.com/libeigen/eigen.git

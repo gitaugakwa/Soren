@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core.h"
-#include "Type.h"
 
 #include <string>
+#include <map>
 
 namespace Soren {
 
@@ -103,6 +103,89 @@ namespace Soren {
 		}
 	private:
 		const Event& m_Event;
+	};
+
+	class EventEmmiter {
+		template<typename T>
+		using EventFn = std::function<bool(T&)>;
+
+		class Subscription
+		{
+			friend EventEmmiter;
+			EventFn<Event> mEventFunction;
+			Subscription(EventFn<Event> eventFunction)
+				: mEventFunction(eventFunction)
+			{
+
+			};
+
+			void Emit(Event& event) {
+				mEventFunction(event);
+			}
+
+		public:
+		};
+
+		std::map<EventType, std::vector<Subscription>> mSubscriptions;
+		inline static std::map<EventType, std::vector<Subscription>> sSubscriptions;
+
+	protected:
+
+		template<typename T>
+		void Emit(T event)
+		{
+			// Global Subscriptions
+			if (sSubscriptions.find(event.GetEventType()) == sSubscriptions.end())
+				return;
+
+			auto&& globalSubscriptions = sSubscriptions.at(event.GetEventType());
+
+			for (auto&& subscription : globalSubscriptions)
+				subscription.Emit(event);
+			// Ignore events for which we do not have an observer (yet).
+			if (mSubscriptions.find(event.GetEventType()) == mSubscriptions.end())
+				return;
+
+			auto&& subscriptions = mSubscriptions.at(event.GetEventType());
+
+			for (auto&& subscription : subscriptions)
+				subscription.Emit(event);
+		}
+	public:
+
+		template<typename T>
+		Subscription& Subscribe(EventFn<Event> func)
+		{
+			mSubscriptions[T::GetStaticType()].push_back(Subscription(func));
+			return mSubscriptions[T::GetStaticType()].back();
+		}
+
+		template<typename T>
+		static Subscription& GlobalSubscribe(EventFn<Event> func)
+		{
+			sSubscriptions[T::GetStaticType()].push_back(Subscription(func));
+			return sSubscriptions[T::GetStaticType()].back();
+		}
+
+		template<typename T>
+		bool Unsubscribe(Subscription& subscription) {
+			const pos = std::find(mSubscriptions[T::GetStaticType()].begin(), mSubscriptions[T::GetStaticType()].end(), subscription);
+			if (pos != mSubscriptions[T::GetStaticType()].end()) {
+				mSubscriptions[T::GetStaticType()].erase(pos);
+				return true;
+			}
+			return false;
+		}
+
+		template<typename T>
+		static bool GlobalUnsubscribe(Subscription& subscription) {
+			const pos = std::find(sSubscriptions[T::GetStaticType()].begin(), sSubscriptions[T::GetStaticType()].end(), subscription);
+			if (pos != sSubscriptions[T::GetStaticType()].end()) {
+				sSubscriptions[T::GetStaticType()].erase(pos);
+				return true;
+			}
+			return false;
+		}
 	};
 
 	inline std::ostream& operator<<(std::ostream& os, const Event& e)

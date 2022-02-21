@@ -5,6 +5,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <variant>
 
 #include <map>
 #include <string>
@@ -28,14 +29,25 @@
 
 // Soren+Neural
 
+// Activation
 #include "Activation/Activation.h"
+
+// ThreadPool
 #include "ThreadPool.h"
+
+// Timer
+#include "Timer.h"
+
+// Random
 #include "Random/Random.h"
+
+// Log
 #include "Log/Log.h"
 
+// JSON
 #include "nlohmann/json.hpp"
 
 
-#ifdef OL_PLATFORM_WINDOWS
+#ifdef SOREN_PLATFORM_WINDOWS
 #include <Windows.h>
-#endif // OL_PLATFORM_WINDOWS
+#endif // SOREN_PLATFORM_WINDOWS

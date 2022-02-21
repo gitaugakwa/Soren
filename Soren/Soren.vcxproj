@@ -78,7 +78,7 @@
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;Vendor\eigen;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -102,7 +102,7 @@
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;Vendor\eigen;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -130,7 +130,7 @@
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions>SOREN_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;SOREN_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Vendor\spdlog\include;Vendor\json\include;Vendor\eigen;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -171,73 +171,31 @@
     <ClInclude Include="src\Input\Input.h" />
     <ClInclude Include="src\KeyCodes.h" />
     <ClInclude Include="src\Layer\Layer.h" />
-    <ClInclude Include="src\Layer\layData.h" />
     <ClInclude Include="src\Link\Link.h" />
-    <ClInclude Include="src\Link\linkData.h" />
+    <ClInclude Include="src\Link\Linker.h" />
+    <ClInclude Include="src\Link\Linking.h" />
     <ClInclude Include="src\Log\Log.h" />
     <ClInclude Include="src\MouseButtonCodes.h" />
     <ClInclude Include="src\Network\Network.h" />
-    <ClInclude Include="src\Network\netData.h" />
     <ClInclude Include="src\Node\Node.h" />
-    <ClInclude Include="src\Node\nodeData.h" />
     <ClInclude Include="src\Output\Output.h" />
-    <ClInclude Include="src\Soren.h" />
     <ClInclude Include="src\Random\Random.h" />
+    <ClInclude Include="src\Soren.h" />
     <ClInclude Include="src\Status\Status.h" />
     <ClInclude Include="src\Test\Test.h" />
     <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\Timer.h" />
-    <ClInclude Include="src\Train\Train.h" />
-    <ClInclude Include="src\Type.h" />
     <ClInclude Include="src\sorenpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Activation\Activation.cpp" />
     <ClCompile Include="src\Application\Application.cpp" />
     <ClCompile Include="src\Input\Input.cpp" />
-    <ClCompile Include="src\Layer\Layer.cpp" />
-    <ClCompile Include="src\Layer\layEvent.cpp" />
-    <ClCompile Include="src\Layer\layFile.cpp" />
-    <ClCompile Include="src\Layer\layInput.cpp" />
-    <ClCompile Include="src\Layer\layLink.cpp" />
-    <ClCompile Include="src\Layer\layNetwork.cpp" />
-    <ClCompile Include="src\Layer\layNode.cpp" />
-    <ClCompile Include="src\Layer\layOutput.cpp" />
-    <ClCompile Include="src\Layer\layStatus.cpp" />
-    <ClCompile Include="src\Link\Link.cpp" />
-    <ClCompile Include="src\Link\linkEvent.cpp" />
-    <ClCompile Include="src\Link\linkFile.cpp" />
-    <ClCompile Include="src\Link\linkInput.cpp" />
-    <ClCompile Include="src\Link\linkLayer.cpp" />
-    <ClCompile Include="src\Link\linkNetwork.cpp" />
-    <ClCompile Include="src\Link\linkNode.cpp" />
-    <ClCompile Include="src\Link\linkOutput.cpp" />
-    <ClCompile Include="src\Link\linkStatus.cpp" />
     <ClCompile Include="src\Log\Log.cpp" />
-    <ClCompile Include="src\Network\NetFile.cpp" />
-    <ClCompile Include="src\Network\Network.cpp" />
-    <ClCompile Include="src\Network\netEvent.cpp" />
-    <ClCompile Include="src\Network\netInput.cpp" />
-    <ClCompile Include="src\Network\netLayer.cpp" />
-    <ClCompile Include="src\Network\netLink.cpp" />
-    <ClCompile Include="src\Network\netNode.cpp" />
-    <ClCompile Include="src\Network\netOutput.cpp" />
-    <ClCompile Include="src\Network\netStatus.cpp" />
-    <ClCompile Include="src\Network\netSync.cpp" />
-    <ClCompile Include="src\Node\Node.cpp" />
-    <ClCompile Include="src\Node\nodeEvent.cpp" />
-    <ClCompile Include="src\Node\nodeFile.cpp" />
-    <ClCompile Include="src\Node\nodeInput.cpp" />
-    <ClCompile Include="src\Node\nodeLayer.cpp" />
-    <ClCompile Include="src\Node\nodeLink.cpp" />
-    <ClCompile Include="src\Node\nodeNetwork.cpp" />
-    <ClCompile Include="src\Node\nodeOutput.cpp" />
-    <ClCompile Include="src\Node\nodeStatus.cpp" />
     <ClCompile Include="src\Output\Output.cpp" />
     <ClCompile Include="src\Random\Random.cpp" />
     <ClCompile Include="src\Status\Status.cpp" />
     <ClCompile Include="src\Test\Test.cpp" />
-    <ClCompile Include="src\Train\Train.cpp" />
     <ClCompile Include="src\sorenpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
