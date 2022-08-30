@@ -6,10 +6,12 @@
 
 #include "Log/Log.h"
 #include "Events/Event.h"
-
-#include "CallbackFunctions.h"
+//#include "Eigen/Core"
+//#include "Optimizer/Optimizer.h"
 
 #include "nlohmann/json.hpp"
+#pragma warning( disable : 5054 ) // Disable Warning C5054: operator '&': deprecated between enumerations of different types
+
 
 namespace Soren {
 
@@ -33,7 +35,7 @@ namespace Soren {
 
 		class BaseLayer;
 
-		class BaseNetwork : public Linkable {
+		class BaseNetwork  {
 
 			//template<typename TValue, typename TBias, typename TWeight>
 			//friend class Layer;
@@ -42,7 +44,7 @@ namespace Soren {
 			BaseNetwork(): mId{ sId++ } {};
 			~BaseNetwork() {};
 
-			inline size_t id() const override { return mId; }
+			inline size_t id() const { return mId; }
 
 			// Special member functions
 			#pragma region
@@ -51,7 +53,7 @@ namespace Soren {
 			BaseNetwork(BaseNetwork&& arg) noexcept
 				: mId(std::exchange(arg.mId, 0)) {};
 			BaseNetwork& operator=(const BaseNetwork&) {
-				mId = sId++;
+				//mId = sId++;
 				return *this;
 			};
 			BaseNetwork& operator=(BaseNetwork&& arg) noexcept {
@@ -66,10 +68,12 @@ namespace Soren {
 		};
 
 		template<typename TValue = double, typename TBias = TValue, typename TWeight = TValue>
-		class SOREN_API Network : public EventEmmiter, public BaseNetwork// Should be NetworkEvent
+		class SOREN_API Network : public EventEmmiter, public BaseNetwork // Should be NetworkEvent
 		{
 			//template<typename TValue, typename TBias, typename TWeight>
 			//friend class Network;
+			//template<typename TValue, typename TBias, typename TWeight>
+			//friend class Optimizer::OptimizerBase<TValue, TBias, TWeight>;
 
 		public:
 
@@ -87,7 +91,8 @@ namespace Soren {
 			//inline size_t id() const override { return mId; }
 			//inline TValue value() const { return mValue; }
 			//inline TBias bias() const { return mBias; }
-			inline const std::map<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>& layers() const { return mLayers; }
+			inline const std::vector<std::shared_ptr<Layer<TValue, TBias, TWeight>>>& layers() const { return mLayers; }
+			inline const size_t size() const { return mLayers.size(); }
 			inline bool running() const { return mRunning; }
 			inline bool locked() const { return mLocked; }
 
@@ -127,43 +132,21 @@ namespace Soren {
 			// Layer
 			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
 			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer) {
-				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
-					(pos->second)->link(layer);
-				}
+				/*if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					(*pos)->link(layer);
+				}*/
 				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
-				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer) ));
+				mLayers.emplace_back(std::shared_ptr<Layer<TValue, TBias, TWeight>>(std::move(pLayer)));
 				return *this;
 			}
 			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
-			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<bool(BaseNode& current, BaseNode& input)> shouldLink) {
-				layer.setShouldLink(shouldLink);
-				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
-					static_cast<Layer<>*>((pos->second))->link(*static_cast<Layer<TValue, TBias, TWeight>*>(&layer));
-				}
-				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
-				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
-				return *this;
-			}
-			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
-			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<TWeight(void)> weightGenerator) {
-				layer.setWeightGenerator(weightGenerator);
-				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
-					(pos->second)->link(layer);
-				}
-				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
-				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
-				return *this;
-			}
-			//template<typename TValue=double, typename TBias=double, typename TWeight= double>
-			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> linkGenerator, std::function<TWeight(void)> weightGenerator) {
+			inline Network& addLayer(Layer<TValue, TBias, TWeight>&& layer, typename Layer<TValue, TBias, TWeight>::LinkGenerator linkGenerator) {
 				layer.setLinkGenerator(linkGenerator);
-				layer.setWeightGenerator(weightGenerator);
 				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
-					(pos->second)->link(layer);
+					(*pos)->link(layer);
 				}
-				//auto layer = new Layer(std::move(layer));
 				auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(std::move(layer));
-				mLayers.emplace(std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer)));
+				mLayers.emplace_back(std::shared_ptr<Layer<TValue, TBias, TWeight>>(std::move(pLayer)));
 				return *this;
 			}
 
@@ -172,83 +155,77 @@ namespace Soren {
 			inline Eigen::VectorX<typename std::common_type<TValue, TBias>::type> resolveMatrix() {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
 					for (size_t iLayers = 0; iLayers < mLayers.size() && std::distance(pos, mLayers.end()) > 1; iLayers++, pos++) {
-						(pos->second)->pipeMatrix(*(std::next(pos, 1)->second));
+						(*pos)->pipeMatrix(*(std::next(pos, 1)));
 					}
-					return (pos->second)->outputMatrix();
+					return (*pos)->outputMatrix();
 				}
 				throw std::range_error("No Layers in network");
 			}
 
 			// Basic
 			#pragma region
-			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Network& input(std::vector<TInputValue>& value) {
+			//template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::vector<TValue>& value) {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
-					pos->second->input(value);
+					(*pos)->input(value);
 				}
 				return (*this);
 			}
-			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Network& input(std::vector<TInputValue>&& value) {
+			//template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(std::vector<TValue>&& value) {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
-					(pos->second)->input(value);
+					(*pos)->input(value);
 				}
 				return (*this);
 			}
-			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Network& input(std::map<size_t, TInputValue>& value) {
+			//template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(const Eigen::Ref<const Eigen::MatrixX<TValue>>& value) {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
-					pos->second->input(value);
+					(*pos)->input(value);
 				}
 				return *this;
 			}
-			template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Network& input(std::map<size_t, TInputValue>&& value) {
+			//template<typename TInputValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Network& input(const Eigen::MatrixX<TValue>&& value) {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
-					pos->second->input(value);
+					(*pos)->input(value);
 				}
 				return *this;
 			}
 
-			template<typename TValue>
-			inline std::vector<TValue> output() const {
+			//template<typename TValue>
+			inline Eigen::MatrixX<TValue> output() const {
 
-				if (auto pos = mLayers.rbegin(); pos != mLayers.end()) {
-					return pos->second.output();
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					return (*pos)->output();
 				}
 				throw std::range_error("No Layers in network");
 				
 			}
+			/*inline Eigen::Vector<TValue, Eigen::Dynamic> output() const {
 
-			template<typename TLinkNetworkValue>
-			std::map<size_t, TLinkNetworkValue> resolveMap() {
-
-				std::map<size_t, TLinkNetworkValue> data;
-
-				for (auto& [node, links] : mLinker.links()) {
-					for (auto& [linkedNode, link] : links) {
-						data[linkedNode.get().id()] += static_cast<TLinkNetworkValue>(link.pipe<TValue>(dynamic_cast<Node<TValue, TBias, TWeight>*>(&(node.get()))->output()));
-					}
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					return (*pos)->output();
 				}
-
-				for (auto& [node, links] : Network.mLinker.links()) {
-					for (auto& [linkedNode, link] : links) {
-						auto pos = mNodes.find(linkedNode.get().id());
-						if (pos != mNodes.end()) {
-							data[node.get().id()] += static_cast<TLinkNetworkValue>(link.pipe<TLinkNetworkValue>(dynamic_cast<Node<TLinkNetworkValue, TLinkNetworkBias, TLinkNetworkWeight>*>(&(linkedNode.get()))->output()));
-						}
-					}
-				}
-
-				return data;
+				throw std::range_error("No Layers in network");
+				
 			}
+			inline Eigen::VectorX<TValue> outputMatrix() const {
 
-			std::vector<typename std::common_type<TValue, TBias>::type> resolve() {
+				if (auto pos = mLayers.rbegin(); pos != mLayers.rend()) {
+					return (*pos)->outputMatrix();
+				}
+				throw std::range_error("No Layers in network");
+				
+			}*/
+			Network<TValue, TBias,TWeight>& resolve() {
 				if (auto pos = mLayers.begin(); pos != mLayers.end()) {
-					for (size_t iLayers = 0; iLayers < mLayers.size() && std::distance(pos, mLayers.end()) > 1; iLayers++, pos++) {
-						(pos->second)->pipe(*(std::next(pos, 1)->second));
+					size_t size = mLayers.size();
+					for (size_t iLayers = 0; iLayers < size - 1; iLayers++) {
+						(*pos)->pipe(**((++pos)));
 					}
-					return (pos->second)->output();
+					(*pos)->resolve();
+					return (*this);
 				}
 				throw std::range_error("No Layers in network");
 			}
@@ -258,6 +235,17 @@ namespace Soren {
 				network.input(resolve());
 				return network;
 			}
+
+			void backPropagate(Eigen::Vector<TValue, Eigen::Dynamic> derivatives) {
+				auto pos = mLayers.rbegin();
+				(*pos)->backPropagate(derivatives, **(std::next(pos, 1)));
+				pos++;
+				for (; pos != std::prev(mLayers.rend(),1); pos++) {
+					// Prevent backprop to layers with no links
+					(*pos)->backPropagate((*std::prev(pos, 1))->mDLossDInput, **(std::next(pos, 1)));
+				}
+			}
+
 			#pragma endregion
 
 			// Operators
@@ -271,9 +259,143 @@ namespace Soren {
 				return pipe(rhs);
 			}
 
+			// Special member functions
+			#pragma region
+			Network(const Network& arg)
+				: BaseNetwork(arg),
+				mLayers({}),
+				mRunning(arg.mRunning),
+				mLocked(arg.mLocked)
+			{
+				if (size_t size = mLayers.size(); size == arg.mLayers.size()) {
+					auto curPos = mLayers.begin();
+					auto argPos = arg.mLayers.begin();
+					for (size_t iLayer = 0; iLayer < size; ++iLayer, ++curPos, ++argPos) {
+						*(curPos) = *(argPos);
+					}
+				}
+				else {
+					std::transform(arg.mLayers.begin(), arg.mLayers.end(), std::inserter(mLayers, mLayers.end()),
+						[](auto layerPair) {
+							auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(*(layerPair.second));
+							return std::make_pair<size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer));
+						});
+				}
+				if (arg.mLayers.size() > 1) {
+					// Relink copied layers
+					auto argPos = std::next(arg.mLayers.begin(), 1);
+					auto curPos = std::next(mLayers.begin(), 1);
+					for (size_t iLayer = 1; iLayer < arg.mLayers.size(); iLayer++, argPos++, curPos++) {
+						auto& argPrevNode = std::prev(argPos, 1)->mNodes;
+						auto argPrevNodePos = argPrevNode.begin();
+						auto& argNode = argPos->mNodes;
+						auto& argLinks = argPos->mLinker.mLinks;
+						auto argNodePos = argNode.begin();
+						auto& curPrevNode = std::prev(curPos, 1)->mNodes;
+						auto curPrevNodePos = curPrevNode.begin();
+						auto& curNode = curPos->mNodes;
+						auto& curLinks = curPos->mLinker.mLinks;
+						auto curNodePos = curNode.begin();
+
+						for (auto& [linked, links] : argLinks) {
+							// Find position of node in the original layer
+							auto distance = std::distance(argNodePos, argNode.find(linked->id()));
+							// Get the node in the same position in the coppied layer
+							auto copiedNode = std::next(curNodePos, distance);
+							for (auto& [lowerLinked, link] : links) {
+								auto innerDistance = std::distance(argPrevNodePos, argPrevNode.find(lowerLinked->id()));
+								auto copiedInnerNode = std::next(curPrevNodePos, innerDistance);
+								curLinks[copiedNode][copiedInnerNode] = link;
+							}
+						}
+					}
+				}
 
 
-		private:
+				NetworkCopiedEvent event{ arg.mId, mId };
+				Emit(event);
+			};
+			Network(Network<TValue, TBias, TWeight>&& arg) noexcept
+				: BaseNetwork(std::move(arg)),
+				mLayers(std::exchange(arg.mLayers, {})),
+				mRunning(std::exchange(arg.mRunning, false)),
+				mLocked(std::exchange(arg.mLocked, true))
+			{
+				NetworkMovedEvent event{ mId };
+				Emit(event);
+			};
+			Network& operator=(const Network& arg) {
+				BaseNetwork::operator=(arg);
+					//if (*this == arg) return *this;
+				if (size_t size = mLayers.size(); size == arg.mLayers.size()) {
+					auto curPos = mLayers.begin();
+					auto argPos = arg.mLayers.begin();
+					for (size_t iLayer = 0; iLayer < size; ++iLayer, ++curPos, ++argPos) {
+						*(curPos) = *(argPos);
+					}
+				}
+				else {
+					std::transform(arg.mLayers.begin(), arg.mLayers.end(), std::inserter(mLayers, mLayers.end()),
+						[](auto& layerPair) {
+							auto pLayer = std::make_shared<Layer<TValue, TBias, TWeight>>(*(layerPair.second));
+							return std::make_pair<const size_t, std::shared_ptr<Layer<TValue, TBias, TWeight>>>(pLayer->id(), std::move(pLayer));
+						});
+				}
+
+				if (arg.mLayers.size() > 1) {
+					// Relink copied layers
+					auto argPos = std::next(arg.mLayers.begin(), 1);
+					auto curPos = std::next(mLayers.begin(), 1);
+					for (size_t iLayer = 1; iLayer < arg.mLayers.size(); iLayer++, argPos++, curPos++) {
+						auto& argPrevNode = std::prev(argPos, 1)->mNodes;
+						auto argPrevNodePos = argPrevNode.begin();
+						auto& argNode = argPos->mNodes;
+						auto& argLinks = argPos->mLinker.mLinks;
+						auto argNodePos = argNode.begin();
+						auto& curPrevNode = std::prev(curPos, 1)->mNodes;
+						auto curPrevNodePos = curPrevNode.begin();
+						auto& curNode = curPos->mNodes;
+						auto& curLinks = curPos->mLinker.mLinks;
+						auto curNodePos = curNode.begin();
+
+						for (auto& [linked, links] : argLinks) {
+							// Find position of node in the original layer
+							auto distance = std::distance(argNodePos, argNode.find(linked->id()));
+							// Get the node in the same position in the coppied layer
+							auto copiedNode = std::next(curNodePos, distance);
+							for (auto& [lowerLinked, link] : links) {
+								auto innerDistance = std::distance(argPrevNodePos, argPrevNode.find(lowerLinked->id()));
+								auto copiedInnerNode = std::next(curPrevNodePos, innerDistance);
+								curLinks[copiedNode][copiedInnerNode] = link;
+							}
+						}
+					}
+				}
+
+				mRunning = arg.mRunning;
+				mLocked = arg.mLocked;
+
+				NetworkCopyAssignedEvent event{};
+				Emit(event);
+
+				return *this;
+			};
+			Network& operator=(Network&& arg) noexcept {
+				BaseNetwork::operator=(std::move(arg));
+
+				mLayers = std::move(arg.mLayers);
+				mRunning = std::move(arg.mRunning);
+				mLocked = std::move(arg.mLocked);
+
+				NetworkMoveAssignedEvent event{};
+				Emit(event);
+				return *this;
+			};
+			#pragma endregion
+
+
+
+		protected:
 
 			// Events
 			#pragma region
@@ -298,10 +420,12 @@ namespace Soren {
 
 			//std::function<TValue(const TValue)> mActivation = Activation::Identity<TValue>;
 
-			std::map<size_t, std::shared_ptr<Layer<TValue,TBias,TWeight>>> mLayers{};
+			std::vector<std::shared_ptr<Layer<TValue,TBias,TWeight>>> mLayers{};
 
 		};
 
 
 	} // namespace Neural
 } // namespace Soren
+
+#pragma warning( default : 5054 ) // Reenable Warning C5054: 'zero': operator '&': deprecated between enumerations of different types

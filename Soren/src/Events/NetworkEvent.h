@@ -167,13 +167,14 @@ namespace Soren {
 	class SOREN_API NetworkCopiedEvent : public Event
 	{
 	public:
-		NetworkCopiedEvent()
-			{}
+		NetworkCopiedEvent(size_t inId, size_t outId)
+			: mInId(inId), mOutId(outId) {}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NetworkCopiedEvent: ";
+			ss << "[" << mInId << "]" << " -> " << "[" << mOutId << "]";
 			//ss << m_Title;
 			//ss << " (Size: " << m_Size << ")";
 			
@@ -184,7 +185,7 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNetwork)
 
 	private:
-		//const size_t m_Size;
+		const size_t mInId, mOutId;
 		//const std::string m_Title;
 	};
 	
@@ -216,13 +217,14 @@ namespace Soren {
 	class SOREN_API NetworkMovedEvent : public Event
 	{
 	public:
-		NetworkMovedEvent()
-			{}
+		NetworkMovedEvent(size_t id)
+			: mId(id) {}
 
 		std::string ToString() const override
 		{
 			std::stringstream ss;
 			ss << "NetworkMovedEvent: ";
+			ss << "[" << mId << "]";
 			//ss << m_Title;
 			//ss << " (Size: " << m_Size << ")";
 
@@ -233,7 +235,7 @@ namespace Soren {
 		EVENT_CLASS_CATEGORY(EventCategoryNetwork)
 
 	private:
-		//const size_t m_Size;
+		const size_t mId;
 		//const std::string m_Title;
 	};
 

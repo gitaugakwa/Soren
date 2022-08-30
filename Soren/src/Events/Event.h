@@ -126,7 +126,7 @@ namespace Soren {
 		public:
 		};
 
-		std::map<EventType, std::vector<Subscription>> mSubscriptions;
+		std::map<EventType, std::vector<Subscription>> mSubscriptions{};
 		inline static std::map<EventType, std::vector<Subscription>> sSubscriptions;
 
 	protected:
@@ -163,13 +163,14 @@ namespace Soren {
 		template<typename T>
 		static Subscription& GlobalSubscribe(EventFn<Event> func)
 		{
+			sSubscriptions[T::GetStaticType()].reserve(sSubscriptions[T::GetStaticType()].size() + 1);
 			sSubscriptions[T::GetStaticType()].push_back(Subscription(func));
 			return sSubscriptions[T::GetStaticType()].back();
 		}
 
 		template<typename T>
 		bool Unsubscribe(Subscription& subscription) {
-			const pos = std::find(mSubscriptions[T::GetStaticType()].begin(), mSubscriptions[T::GetStaticType()].end(), subscription);
+			auto pos = std::find(mSubscriptions[T::GetStaticType()].begin(), mSubscriptions[T::GetStaticType()].end(), subscription);
 			if (pos != mSubscriptions[T::GetStaticType()].end()) {
 				mSubscriptions[T::GetStaticType()].erase(pos);
 				return true;
@@ -179,7 +180,7 @@ namespace Soren {
 
 		template<typename T>
 		static bool GlobalUnsubscribe(Subscription& subscription) {
-			const pos = std::find(sSubscriptions[T::GetStaticType()].begin(), sSubscriptions[T::GetStaticType()].end(), subscription);
+			auto pos = std::find(sSubscriptions[T::GetStaticType()].begin(), sSubscriptions[T::GetStaticType()].end(), subscription);
 			if (pos != sSubscriptions[T::GetStaticType()].end()) {
 				sSubscriptions[T::GetStaticType()].erase(pos);
 				return true;

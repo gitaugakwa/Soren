@@ -9,9 +9,10 @@
 #include "Log/Log.h"
 #include "Events/Event.h"
 
-#include "CallbackFunctions.h"
+#include "LayerAsync.h"
 
 #include "nlohmann/json.hpp"
+
 
 namespace Soren {
 
@@ -22,6 +23,7 @@ namespace Soren {
 
 	namespace Neural {
 
+
 		class Event;
 
 		struct Linkable;
@@ -31,7 +33,7 @@ namespace Soren {
 		template<typename TValue, typename TBias, typename TWeight>
 		class Node;
 
-		class BaseLayer: public Linkable {
+		class BaseLayer {
 			//template<typename TValue, typename TBias, typename TWeight>
 			//friend class Layer;
 		public:
@@ -51,7 +53,7 @@ namespace Soren {
 			//template<typename TWeight>
 			void link(BaseLayer& layer);
 
-			inline size_t id() const override { return mId; }
+			inline size_t id() const { return mId; }
 
 			// Special member functions
 			#pragma region
@@ -60,7 +62,7 @@ namespace Soren {
 			BaseLayer(BaseLayer&& arg) noexcept
 				: mId(std::exchange(arg.mId, 0)) {};
 			BaseLayer& operator=(const BaseLayer&) {
-				mId = sId++;
+				//mId = sId++;
 				return *this;
 			};
 			BaseLayer& operator=(BaseLayer&& arg) noexcept {
@@ -81,60 +83,88 @@ namespace Soren {
 
 			template<typename TValue, typename TBias, typename TWeight>
 			friend class Layer;
+			template<typename TValue, typename TBias, typename TWeight>
+			friend class Network;
 
 		public:
 
-			Layer(size_t size = 0, TBias bias = 0, TValue value = 0)
-				: mBias{bias}, mValue{ value }
+			using LinkGenerator = std::function<Eigen::Vector<TWeight, Eigen::Dynamic>(size_t index, const Layer<TValue, TBias, TWeight>& inputLayer)>;
+			using BiasGenerator = std::function<TBias(size_t index)>;
+			using LayerActivation = std::function<Eigen::Vector<TValue, Eigen::Dynamic>(Eigen::Vector<TWeight, Eigen::Dynamic>)>;
+
+
+			Layer(size_t size = 0)
 			{
-				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
-
-				for (size_t i = 0; i < size; i++) {
-					//auto pNode = new Node<TValue, TBias, TWeight>({ bias, value });
-					auto pNode = std::make_shared<Node<TValue, TBias, TWeight>>(bias, value);
-					mNodes.emplace(std::make_pair<size_t, std::shared_ptr<Node<TValue, TBias, TWeight>>>(pNode ->id(), std::move(pNode)));
-				}
-
+				Timer::Stopwatch stopwatch;
+				// //SOREN_CORE_WARN("No Default Link Weight Limits Set");
+				mActivated = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeighted = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeights = Eigen::Matrix<TWeight, Eigen::Dynamic, Eigen::Dynamic>::Identity(size, size);
+				mInputs = Eigen::MatrixX<TValue>::Zero(size, 1);
+				mBiases = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
 				//Bind();
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
 
 				LayerCreatedEvent event{};
 				Emit(event);
 			};
-			Layer(size_t size, std::function<TValue(const TValue)> activation, TBias bias = 0, TValue value = 0)
-				: mActivation(activation), mBias(bias), mValue(value)
+			Layer(size_t size, std::shared_ptr<Activation::ActivatorBase<TValue>> activation)
+				: mActivation(activation)
 			{
-				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
-				for (size_t i = 0; i < size; i++) {
-					auto pNode = std::make_shared<Node<TValue, TBias, TWeight>>( mActivation, bias, value );
-					mNodes.emplace(std::make_pair<size_t,std::shared_ptr<Node<TValue,TBias,TWeight>>>(pNode->id(), std::move(pNode)));
-				}
+				Timer::Stopwatch stopwatch;
+
+				mActivated = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeighted = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeights = Eigen::Matrix<TWeight, Eigen::Dynamic, Eigen::Dynamic>::Identity(size, size);
+				mInputs = Eigen::MatrixX<TValue>::Zero(size, 1);
+				mBiases = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				
+				// //SOREN_CORE_WARN("No Default Link Weight Limits Set");
 				//Bind();
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
 
 				LayerCreatedEvent event{};
 				Emit(event);
 			};
-			Layer(size_t size, std::function<std::vector<TValue>(std::vector<TValue>)> layerActivation, TBias bias = 0, TValue value = 0)
-				:  mLayerActivation(layerActivation), mBias(bias), mValue(value)
+			//Layer(size_t size, std::shared_ptr<Activation::Activator<TValue>> layerActivation)
+			//	:  mLayerActivation(layerActivation)
+			//{
+			//	Timer::Stopwatch stopwatch;
+
+			//	mWeighted = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+			//	mWeights = Eigen::Matrix<TWeight, Eigen::Dynamic, Eigen::Dynamic>::Identity(size, size);
+			//	mInputs = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+			//	mBiases = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+
+			//	// //SOREN_CORE_WARN("No Default Link Weight Limits Set");
+			//	//mInputs.reserve(mNodes.size());
+			//	//Bind();
+
+			//	//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+			//	//SOREN_CORE_TRACE(stopwatch.Stop());
+
+			//	LayerCreatedEvent event{};
+			//	Emit(event);
+			//};
+			Layer(size_t size, std::shared_ptr<Activation::ActivatorBase<TValue>> activation, std::shared_ptr<Activation::Vector::ActivatorBase<TValue>> layerActivation)
+				: mActivation(activation), mLayerActivation(layerActivation)
 			{
-				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
-				for (size_t i = 0; i < size; i++) {
-					auto pNode = std::make_shared<Node<TValue, TBias, TWeight>>( bias, value );
-					mNodes.emplace(std::make_pair<size_t,std::shared_ptr<Node<TValue,TBias,TWeight>>>(pNode->id(), std::move(pNode)));
-				}
+				Timer::Stopwatch stopwatch;
+				// //SOREN_CORE_WARN("No Default Link Weight Limits Set");
+				mActivated = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeighted = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				mWeights = Eigen::Matrix<TWeight, Eigen::Dynamic, Eigen::Dynamic>::Identity(size, size);
+				mInputs = Eigen::MatrixX<TValue>::Zero(size, 1);
+				mBiases = Eigen::Vector<TValue, Eigen::Dynamic>::Zero(size);
+				//mInputs.reserve(mNodes.size());
 				//Bind();
 
-				LayerCreatedEvent event{};
-				Emit(event);
-			};
-			Layer(size_t size, std::function<std::vector<TValue>(std::vector<TValue>)> layerActivation, std::function<TValue(const TValue)> activation, TBias bias = 0, TValue value = 0)
-				: mActivation(activation), mLayerActivation(layerActivation), mBias(bias), mValue(value)
-			{
-				// SOREN_CORE_WARN("No Default Link Weight Limits Set");
-				for (size_t i = 0; i < size; i++) {
-					auto pNode = std::make_shared<Node<TValue, TBias, TWeight>>( mActivation, bias, value );
-					mNodes.emplace(std::make_pair<size_t,std::shared_ptr<Node<TValue,TBias,TWeight>>>(pNode->id(), std::move(pNode)));
-				}
-				//Bind();
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
 
 				LayerCreatedEvent event{};
 				Emit(event);
@@ -145,18 +175,29 @@ namespace Soren {
 			};
 
 			// Links
-			inline TValue value() const { return mValue; }
-			inline size_t size() const { return mNodes.size(); }
-			inline TBias bias() const { return mBias; }
-			inline const std::map<size_t,std::shared_ptr<Node<TValue, TBias, TWeight>>>& nodes() const { return mNodes; }
+			inline const Eigen::Vector<TValue, Eigen::Dynamic>& values() const { return mWeighted; }
+			inline const Eigen::MatrixX<TWeight>& weights() const { return mWeights; }
+			inline Eigen::MatrixX<TWeight>& weights() { return mWeights; }
+			inline const Eigen::MatrixX<TWeight>& biases() const { return mBiases; }
+			inline Eigen::VectorX<TBias>& biases() { return mBiases; }
+			inline const Eigen::MatrixX<TValue>& layerActivations() const { return mLayerActivations; }
+			inline Eigen::MatrixX<TValue>& layerActivations() { return mLayerActivations; }
+			inline const Eigen::MatrixX<TValue>& activated() const { return mActivated; }
+			inline Eigen::MatrixX<TValue>& activated() { return mActivated; }
+			inline const Eigen::MatrixX<TValue>& weighted() const { return mWeighted; }
+			inline Eigen::MatrixX<TValue>& weighted() { return mWeighted; }
+			inline const Eigen::MatrixX<TValue>& inputs() const { return mInputs; }
+			inline Eigen::MatrixX<TValue>& inputs() { return mInputs; }
+			inline const std::shared_ptr<Activation::Vector::ActivatorBase<TValue>>& layerActivation() const { return mLayerActivation; }
+			inline std::shared_ptr<Activation::Vector::ActivatorBase<TValue>>& layerActivation() { return mLayerActivation; }
+			inline const std::shared_ptr<Activation::ActivatorBase<TValue>>& activation() const { return mActivation; }
+			inline std::shared_ptr<Activation::ActivatorBase<TValue>>& activation() { return mActivation; }
+			inline size_t size() const { return mWeighted.rows(); }
 			inline bool running() const { return mRunning; }
 			inline bool locked() const { return mLocked; }
 
 			void clear() {
 				if (mLocked) return;
-
-				const weight = mBias;
-				mBias = NULL;
 
 				LayerClearedEvent event{};
 				Emit(event);
@@ -181,281 +222,194 @@ namespace Soren {
 			};
 
 			void reset() {
-				LayerResetEvent event(mBias);
+				LayerResetEvent event();
 				Emit(event);
 			};
 
-			inline void value(TValue value) { if (mLocked) return; mValue = value; }
-			inline void bias(TBias bias) { if (mLocked) return; mBias = bias; }
+			inline void value(TValue value) { if (mLocked) return; }
+			inline void bias(TBias bias) { if (mLocked) return; }
 			inline void lock(bool lock) { mLocked = lock; }
 			inline void lock() { mLocked = true; }
 			inline void unlock() { mLocked = false; }
 
-			inline void setLinkGenerator(std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> linkGenerator) { if (mLocked) return; mLinkGenerator = linkGenerator; }
-			inline void setWeightGenerator(std::function<TWeight(void)> weightGenerator) { if (mLocked) return; mWeightGenerator = weightGenerator; }
-
-			// Use Async to create many links at once
+			inline void setLinkGenerator(LinkGenerator linkGenerator) { if (mLocked) return; mLinkGenerator = linkGenerator; }
+			inline void setBiasGenerator(std::function<TBias(void)> biasGenerator) { if (mLocked) return; mBiasGenerator = biasGenerator; }
 
 			template<typename TLinkValue = TValue , typename TLinkBias = TBias,typename TLinkWeight=TWeight>
 			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer) {
-				for (auto [node, linkNodes] : layer.generateLinks(*this)) {
-					for (size_t linkNodeId : linkNodes) {
-						if (auto pos = mNodes.find(linkNodeId); pos != mNodes.end())
-							mLinker.link(node, pos->second, mWeightGenerator());
-					}
-				}
-				
+				layer.generateLinks(*this);
 			}
+			
 			template<typename TLinkValue = TValue , typename TLinkBias = TBias,typename TLinkWeight=TWeight>
-			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer,TWeight weight) {
-				for (auto [node, linkNodes] : layer.generateLinks(*this)) {
-					for (size_t linkNodeId : linkNodes) {
-						if (auto pos = mNodes.find(linkNodeId); pos != mNodes.end())
-							mLinker.link(node, pos->second, weight);
-					}
-				}
-			}
-			template<typename TLinkValue = TValue , typename TLinkBias = TBias,typename TLinkWeight=TWeight>
-			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer, std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> linkGenerator,TWeight weight = 0) {
-				for (auto [node, linkNodes] : layer.generateLinks(*this, linkGenerator)) {
-					for (size_t linkNodeId : linkNodes) {
-						if (auto pos = mNodes.find(linkNodeId); pos != mNodes.end())
-							mLinker.link(node, pos->second, weight);
-					}
-				}
-			}
-			template<typename TLinkValue = TValue , typename TLinkBias = TBias,typename TLinkWeight = TWeight>
-			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer,std::function<TWeight(void)> weightGenerator) {
-				for (auto [node, linkNodes] : layer.generateLinks(*this)) {
-					for (size_t linkNodeId : linkNodes) {
-						if (auto pos = mNodes.find(linkNodeId); pos != mNodes.end())
-							mLinker.link(node, pos->second, weightGenerator);
-					}
-				}
-			}
-			template<typename TLinkValue = TValue , typename TLinkBias = TBias,typename TLinkWeight = TWeight>
-			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer, std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> linkGenerator, std::function<TWeight(void)> weightGenerator) {
-				for (auto [node, linkNodes] : layer.generateLinks(*this, linkGenerator)) {
-					for (size_t linkNodeId : linkNodes) {
-						if (auto pos = mNodes.find(linkNodeId); pos != mNodes.end())
-							mLinker.link(node, pos->second, weightGenerator);
-					}
-				}
+			inline void link(Layer<TLinkValue, TLinkBias, TLinkWeight>& layer, LinkGenerator linkGenerator) {
+				layer.generateLinks(*this, linkGenerator);
 			}
 
-			// Eigen
+			// Basic
+			// Receive non-weighted input
+			// basically output() from previous layer
 			#pragma region
-			template<typename TInputValue = TValue>
-			inline void inputMatrix(Eigen::VectorX<TInputValue> value) {
-				auto pos = mNodes.begin();
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					pos->second->input(value(iNodes));
-				}
-			}
-
-			inline Eigen::VectorX<typename std::common_type<TValue, TBias>::type> outputMatrix() const {
-
-				Eigen::VectorX<TBias> vector(mNodes.size());
-				vector.setZero();
-				auto pos = mNodes.begin();
-
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					vector(iNodes) = pos->second->output();
-				}
-				return vector;
-			}
-
-			template <typename TLinkValue = double, typename TLinkBias = double, typename TLinkWeight = double>
-			Eigen::MatrixX<TWeight> linkMatrix(const Layer<TLinkValue, TLinkBias,TLinkWeight>& layer) {
-				Eigen::MatrixX<TWeight> matrix(layer.mNodes.size(), mNodes.size());
-				matrix.setZero();
-				auto pos = mNodes.begin();
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					for (auto& [linkedNode, link] : mLinker.links().at(pos->second)) {
-						auto linkedNodePos = layer.mNodes.find(linkedNode.get()->id());
-						//auto linkedNodePos = std::find_if(layer.mNodes.begin(), layer.mNodes.end(), [linkedNode](auto& [id,node]) {return node.id() == linkedNode.get().id(); });
-						if (linkedNodePos != layer.mNodes.end()) {
-							matrix(std::distance(layer.mNodes.begin(), linkedNodePos), iNodes) = link.weight();
-						}
-					}
-				}
-				return matrix;
-			}
-
-			Eigen::VectorX<TValue> valueMatrix() const {
-				Eigen::VectorX<TBias> vector(mNodes.size());
-				vector.setZero();
-				auto pos = mNodes.begin();
-
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					vector(iNodes) = pos->second.value();
-				}
-				return vector;
-			}
-
-			Eigen::VectorX<TBias> biasMatrix() const {
-				Eigen::VectorX<TBias> vector(mNodes.size());
-				vector.setZero();
-				auto pos = mNodes.begin();
-
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					vector(iNodes) = pos->second.bias();
-				}
-				return vector;
-			}
-
-			template <typename TResolveValue = double, typename TResolveBias = double, typename TResolveWeight = double>
-			Eigen::VectorX<typename std::common_type<TValue, TBias, TWeight>::type> resolveMatrix(Layer<TResolveValue, TResolveBias, TResolveWeight>& layer) {
-				return linkMatrix(layer)* outputMatrix();
-			}
-
-			template <typename TPipeValue = double, typename TPipeBias = double, typename TPipeWeight = double>
-			Layer<TPipeValue, TPipeBias, TPipeWeight>& pipeMatrix(Layer<TPipeValue, TPipeBias, TPipeWeight>& layer) {
-				layer.inputMatrix(resolveMatrix(layer));
-				return layer;
-			}
-			#pragma endregion
-
-			// Basic	
-			#pragma region
-			template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Layer& input(std::vector<TInputValue>& value) {
-				auto activatedValues = mLayerActivation(std::vector<TValue>(value.begin(), value.end()));
-				auto pos = mNodes.begin();
-				for (size_t iNodes = 0; iNodes < mNodes.size() && pos != mNodes.end(); iNodes++, pos++) {
-					pos->second->input(activatedValues[iNodes]);
-				}
+			
+			template<typename TInputValue = TValue,typename TInputBias = TBias,typename TInputWeight = TWeight>
+			inline Layer& input(Layer<TInputValue,TBias, TWeight>& layer) {
+				//Timer::Stopwatch stopwatch;
+				input(layer.output());
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
 				return (*this);
 			}
-			template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Layer& input(std::vector<TInputValue>&& value) {
-				auto activatedValues = mLayerActivation(std::vector<TValue>(value.begin(), value.end()));
-				auto pos = mNodes.begin();
-				for (size_t iNodes = 0; iNodes < mNodes.size() && pos != mNodes.end(); iNodes++, pos++) {
-					pos->second->input(activatedValues[iNodes]);
-				}
+			inline Layer& input(std::vector<TValue>& input) {
+				Timer::Stopwatch stopwatch;
+				/*if (input.size() != (size_t)mWeighted.rows()) {
+					throw std::invalid_argument("The array length provided is not equal to the number of nodes");
+				}*/
+
+				//Async::Layer::InputVector
+				//oneapi::tbb::simple_partitioner partitioner;
+				//std::mutex lock;
+
+				mInputs.noalias() = Eigen::Map<Eigen::Vector<TValue, Eigen::Dynamic>, Eigen::Unaligned>(input.data(), input.size());
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
+
 				return (*this);
 			}
-			template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Layer& input(std::map<size_t, TInputValue>& value) {
-				std::vector<TValue> valueVec;
-				std::vector<size_t> idVec;
-				valueVec.reserve(value.size());
-				idVec.reserve(value.size());
-				for (auto [id, val] : value) {
-					idVec.push_back(id);
-					valueVec.push_back(val);
+			inline Layer& input(const std::vector<TValue>&& input) {
+				//Timer::Stopwatch stopwatch;
+				/*if (input.size() != (size_t)mWeighted.rows()) {
+					throw std::invalid_argument("The array length provided is not equal to the number of nodes");
+				}*/
+
+				mInputs.noalias() = Eigen::Map<Eigen::Vector<TValue, Eigen::Dynamic>, Eigen::Unaligned>(input.data(), input.size());
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
+
+				return (*this);
+			}
+			//template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Layer& input(const Eigen::Ref<const Eigen::MatrixX<TValue>>& input) {
+				//Timer::Stopwatch stopwatch;
+				/*if (input.rows() == mWeighted.rows()) {
+					input = input.transpose();
 				}
-				auto activatedVec = mLayerActivation(valueVec);
-				std::map<size_t, TValue> activatedMap{};
-				for (size_t iValue = 0; iValue < activatedVec.size(); iValue++) {
-					activatedMap[idVec[iValue]] = activatedVec[iValue];
+				if (input.rows() != mWeighted.rows()) {
+					throw std::invalid_argument("The array length provided is not equal to the number of nodes");
+				}*/
+
+				mInputs.noalias() = input;
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
+
+				return (*this);
+			}
+			//template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
+			inline Layer& input(const Eigen::MatrixX<TValue>&& input) {
+				//Timer::Stopwatch stopwatch;
+				/*if (input.rows() == mWeighted.rows()) {
+					input = input.transpose();
+				}
+				if (input.rows() != mWeighted.rows()) {
+					throw std::invalid_argument("The array length provided is not equal to the number of nodes");
+				}*/
+
+				mInputs.noalias() = input;
+
+				//SOREN_CORE_TRACE("ID : {0} -> {1}", mId, __FUNCTION__);
+				//SOREN_CORE_TRACE(stopwatch.Stop());
+
+				return (*this);
+			}
+
+			inline const Eigen::MatrixX<TValue> output() const {
+				mActivated.noalias() = (mWeighted.colwise() + mBiases).unaryExpr([&](TValue input) {
+					return (mActivation)->operator()(input);
+					});
+				return (mLayerActivation)->operator()(mActivated);
+				//return (*mLayerActivation)(mWeighted.unaryExpr(*mActivation) + mBiases);
+			}
+
+			Layer<TValue, TBias, TWeight>& resolve() {
+				//Timer::Stopwatch stopwatch;
+				//oneapi::tbb::simple_partitioner partitioner;
+
+				if (mInputs.rows() != mWeights.cols()) {
+					mInputs.conservativeResizeLike(Eigen::Vector<TValue, Eigen::Dynamic>(mWeights.cols()).setZero());
 				}
 
-				for (auto [id, activatedValue] : activatedMap) {
-					rhs.mNodes.at(id).input(activatedValue);
-				}
+				mWeighted.noalias() = mWeights * mInputs;
+				//SOREN_CORE_INFO("Resolve");
+				//SOREN_CORE_INFO(mInputs);
+				//SOREN_CORE_INFO(mWeights);
+				//SOREN_CORE_INFO(mWeighted);
+
+
 				return *this;
-			}
-			template<typename TInputValue = TValue, std::enable_if_t<std::is_integral<TInputValue>::value || std::is_floating_point<TInputValue>::value, int> = 0>
-			inline Layer& input(std::map<size_t, TInputValue>&& value) {
-				std::vector<TValue> valueVec;
-				std::vector<size_t> idVec;
-				valueVec.reserve(value.size());
-				idVec.reserve(value.size());
-				for (auto [id, val] : value) {
-					idVec.push_back(id);
-					valueVec.push_back(val);
-				}
-				auto activatedVec = mLayerActivation(valueVec);
-				std::map<size_t, TValue> activatedMap{};
-				for (size_t iValue = 0; iValue < activatedVec.size(); iValue++) {
-					activatedMap[idVec[iValue]] = activatedVec[iValue];
-				}
-
-				for (auto [id, activatedValue] : activatedMap) {
-					mNodes.at(id)->input(activatedValue);
-				}
-				return *this;
-			}
-
-			inline std::vector<typename std::common_type<TValue, TBias>::type> output() const {
-
-				std::vector<TBias> vector;
-				auto pos = mNodes.begin();
-
-				for (size_t iNodes = 0; iNodes < mNodes.size(); iNodes++, pos++) {
-					vector.push_back(pos->second->output());
-				}
-				return vector;
-			}
-
-			template<typename TLinkLayerValue = TValue, typename TLinkLayerBias = TBias, typename TLinkLayerWeight = TWeight>
-			std::map<size_t, TLinkLayerValue> resolveMap(Layer<TLinkLayerValue, TLinkLayerBias, TLinkLayerWeight>& layer) {
-
-				std::map<size_t, TLinkLayerValue> data;
-
-				for (auto& [linkNode, links] : mLinker.links()) {
-					if (layer.nodes().find(linkNode.get()->id()) != layer.nodes().end()) {
-						for (auto& [node, link] : links) {
-							data[linkNode.get()->id()] += static_cast<TLinkLayerValue>(link.pipe<TValue>(dynamic_cast<Node<TValue, TBias, TWeight>*>(node.get())->output<TValue, TBias>()));
-						}
-					}
-				}
-
-				return data;
-			}
-
-			template<typename TLinkLayerValue = TValue, typename TLinkLayerBias = TBias, typename TLinkLayerWeight = TWeight>
-			std::vector<TLinkLayerValue> resolve(Layer<TLinkLayerValue, TLinkLayerBias, TLinkLayerWeight>& layer) {
-
-				std::map<size_t, TLinkLayerValue> data;
-				std::vector<TLinkLayerValue> dataVec;
-
-				for (auto& [node, links] : mLinker.links()) {
-					for (auto& [linkedNode, link] : links) {
-						data[linkedNode.get().id()] += static_cast<TLinkLayerValue>(link.pipe<TValue>(dynamic_cast<Node<TValue, TBias, TWeight>*>((node.get()))->output()));
-					}
-				}
-
-				for (auto& [node, links] : rhs.mLinker.links()) {
-					for (auto& [linkedNode, link] : links) {
-						auto pos = mNodes.find(linkedNode.get().id());
-						if (pos != mNodes.end()) {
-							data[node.get().id()] += static_cast<TLinkLayerValue>(link.pipe<TLinkLayerValue>(dynamic_cast<Node<TLinkLayerValue, TLinkLayerBias, TLinkLayerWeight>*>(&(linkedNode.get()))->output()));
-						}
-					}
-				}
-
-				dataVec.reserve(data.size());
-
-				for (auto& [id, value] : data) {
-					dataVec.push_back(value);
-				}
-				return dataVec;
 			}
 
 			template <typename TPipeValue = double, typename TPipeBias = double, typename TPipeWeight = double>
 			Layer<TPipeValue, TPipeBias, TPipeWeight>& pipe(Layer<TPipeValue, TPipeBias, TPipeWeight>& layer) {
-				layer.input(resolveMap(layer));
+				layer.input(this->resolve());
 				return layer;
 			}
+
+
+			template<typename TInputValue = TValue, typename TInputBias = TBias, typename TInputWeight = TWeight>
+			inline Layer& backPropagate(const Eigen::Ref<const Eigen::Vector<TValue, Eigen::Dynamic>>& DLossDLayerActivation, Layer<TInputValue, TBias, TWeight>& input) { // DLoss/DOutput
+				// DLossDActivated
+				mDLossDActivated.noalias() = ((mLayerActivation)->prime(mActivated) /* DLayerActivation/DActivated */) * DLossDLayerActivation;
+
+				// DActivated/DValue
+				mDActivatedDValue.noalias() = (mWeighted + mBiases).unaryExpr([&](auto val) { return (mActivation)->prime(val); });
+
+				// DLoss/DWeight
+				mDLossDWeight = (mDActivatedDValue * mInputs.transpose() /* DValue/DWeight */)/* DActivated/DWeight */.array().colwise() * mDLossDActivated.array();
+
+				if (input.mWeights.cols() || input.mWeights.rows()) {
+					// DOutput/DInput
+					mDActivatedDInput = mWeights.array().colwise() /* DValue/DInput */ * mDActivatedDValue.array();
+
+					// DLoss/DInput
+					mDLossDInput.noalias() = (mDActivatedDInput.transpose() * mDLossDActivated);
+				}
+
+				// Change Weights
+				
+				mWeights += mDLossDWeight;
+
+				return (*this);
+			}
+
+			/*struct Gradients {
+				Eigen::VectorX<double> DLossDInput{};
+				Eigen::MatrixX<double> DLossDWeight{};
+			};*/
+
+			/*Gradients gradients(Eigen::VectorX<double> DLossDOutput) {
+				Timer::Stopwatch stopwatch;
+				
+			}*/
+
+			/*Layer& optimize(Eigen::MatrixX<double>& gradients) {
+			
+			}*/
+
 			#pragma endregion
 
 			//template <typename TValue>
-			std::map<std::shared_ptr<Node<TValue, TBias, TWeight>>, std::vector<size_t>> generateLinks(Layer<TValue, TBias, TWeight>& input) {
-				std::map<std::shared_ptr<Node<TValue, TBias,TWeight>>, std::vector<size_t>> links{};
-				for (auto& [id, node] : mNodes) {
-					links.insert(std::make_pair(node, mLinkGenerator(node, input)));
-				}
-				return links;
+			void generateLinks(Layer<TValue, TBias, TWeight>& input) {
+				generateLinks(input, mLinkGenerator);
 			}
-			std::map<std::shared_ptr<Node<TValue, TBias, TWeight>>, std::vector<size_t>> generateLinks(Layer<TValue, TBias, TWeight>& input, std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight> inputLayer)> linkGenerator) {
-				std::map<std::shared_ptr<Node<TValue, TBias,TWeight>>, std::vector<size_t>> links{};
-				for (auto& [id, node] : mNodes) {
-					links.insert(std::make_pair(node, linkGenerator(node, input)));
+			void generateLinks(Layer<TValue, TBias, TWeight>& input, LinkGenerator linkGenerator) {
+				//oneapi::tbb::simple_partitioner partitioner;
+
+				size_t size = mWeighted.size();
+				mWeights = Eigen::Matrix<TWeight, Eigen::Dynamic, Eigen::Dynamic>(size, input.size());
+				for (unsigned int i = 0; i < size; i++) {
+					mWeights.row(i) = linkGenerator(i, input);
 				}
-				return links;
 			}
 
 
@@ -463,52 +417,53 @@ namespace Soren {
 			#pragma region
 			Layer(const Layer& arg)
 				: BaseLayer(arg),
-				mValue(arg.mValue),
-				mBias(arg.mBias),
-				mNodes(arg.mNodes),
-				mLinker(arg.mLinker),
+				mWeighted(arg.mWeighted),
+				mBiases(arg.mBiases),
+				mWeights(arg.mWeights),
 				//mId(sId++),
 				mRunning(arg.mRunning),
 				mLocked(arg.mLocked),
 				mActivation(arg.mActivation),
 				mLayerActivation(arg.mLayerActivation),
 				mLinkGenerator(arg.mLinkGenerator),
-				mWeightGenerator(arg.mWeightGenerator)
+				mBiasGenerator(arg.mBiasGenerator)
 			{
 				LayerCopiedEvent event{ arg.mId, mId };
 				Emit(event);
 			};
 			Layer(Layer<TValue, TBias, TWeight>&& arg) noexcept
 				: BaseLayer(std::move(arg)),
-				mValue(std::exchange(arg.mValue, static_cast<TValue>(0))),
-				mBias(std::exchange(arg.mBias, static_cast<TBias>(0))),
-				mNodes(std::exchange(arg.mNodes, {})),
-				mLinker(std::exchange(arg.mLinker, {})),
+				mWeighted(std::exchange(arg.mWeighted, {})),
+				mBiases(std::exchange(arg.mBiases, {})),
+				mWeights(std::exchange(arg.mWeights, {})),
 				//mId(std::exchange(arg.mId, 0)),
 				mRunning(std::exchange(arg.mRunning, false)),
 				mLocked(std::exchange(arg.mLocked, true)),
-				mActivation(std::exchange(arg.mActivation, Activation::Identity<TValue>)),
-				mLayerActivation(std::exchange(arg.mLayerActivation, [](auto vec) {return vec; })),
-				mLinkGenerator(std::exchange(arg.mLinkGenerator, arg.mDefaultLinkGenerator)),
-				mWeightGenerator(std::exchange(arg.mWeightGenerator, []() -> TWeight {return 0; }))
+				mActivation(std::exchange(arg.mActivation, std::make_shared<
+					Activation::Activator<TValue>>(Activation::Identity<TValue>)
+				)),
+				mLayerActivation(std::exchange(arg.mLayerActivation, std::make_shared<
+					Activation::Vector::Activator<TValue>>(Activation::Vector::Identity<TValue>)
+				)),
+				mLinkGenerator(std::exchange(arg.mLinkGenerator, mDefaultLinkGenerator)),
+				mBiasGenerator(std::exchange(arg.mBiasGenerator, mDefaultBiasGenerator))
 			{
 				LayerMovedEvent event{mId};
 				Emit(event);
 			};
 			Layer& operator=(const Layer& arg) {
-				BaseLayer::operator=(arg)
+				BaseLayer::operator=(arg);
 				//if (*this == arg) return *this;
 
-				mValue = arg.mValue;
-				mBias = arg.mBias;
-				mNodes = arg.mNodes;
-				mLinker = arg.mLinker;
 				mRunning = arg.mRunning;
+				mWeighted = arg.mWeighted;
+				mBiases = arg.mBiases;
+				mWeights = arg.mWeights;
 				mLocked = arg.mLocked;
 				mActivation = arg.mActivation;
 				mLayerActivation = arg.mLayerActivation;
 				mLinkGenerator = arg.mLinkGenerator;
-				mWeightGenerator = arg.mWeightGenerator;
+				mBiasGenerator = arg.mBiasGenerator;
 				//mId = sId++;
 
 				LayerCopyAssignedEvent event{};
@@ -517,18 +472,19 @@ namespace Soren {
 				return *this;
 			};
 			Layer& operator=(Layer&& arg) noexcept {
-				BaseLayer::operator=(std::move(arg))
+				BaseLayer::operator=(std::move(arg));
 
-				mValue = std::move(arg.mValue);
-				mBias = std::move(arg.mBias);
-				mNodes = std::move(arg.mNodes);
-				mLinker = std::move(arg.mLinker)
+				mWeighted = std::move(arg.mWeighted);
+				mBiases = std::move(arg.mBiases);
+				mWeights = std::move(arg.mWeights);
 				mRunning = std::move(arg.mRunning);
 				mLocked = std::move(arg.mLocked);
 				mActivation = std::move(arg.mActivation);
 				mLayerActivation = std::move(arg.mLayerActivation);
 				mLinkGenerator = std::move(arg.mLinkGenerator);
-				mWeightGenerator = std::move(arg.mWeightGenerator);
+				mBiasGenerator = std::move(arg.mBiasGenerator);
+
+
 				//mId = std::move(arg.mId);
 
 				LayerMoveAssignedEvent event{};
@@ -552,18 +508,9 @@ namespace Soren {
 
 			// Conversion
 
-			operator Eigen::VectorX<TValue>() const {
-				Eigen::VectorX<TValue> vector(mNodes.size());
-				auto pos = mNodes.begin();
-				for (size_t iNode = 0; iNode < mNodes.size();iNode++, pos++) {
-					vector(iNode) = (*pos).second.value();
-				}
-				return vector;
-			}
-
 			// Iterator
 
-			typedef typename std::map<size_t, Node<TValue,TBias,TWeight>>::iterator iterator;
+			/*typedef typename std::map<size_t, Node<TValue,TBias,TWeight>>::iterator iterator;
 
 			iterator begin() {
 				return mNodes.begin();
@@ -576,13 +523,13 @@ namespace Soren {
 			}
 			const iterator end() const {
 				return mNodes.end();
-			}
+			}*/
 
 		protected:
 
 			//size_t mId;
 
-		private:
+		protected:
 
 			// Events
 			#pragma region
@@ -594,36 +541,55 @@ namespace Soren {
 
 				//dispatcher.Dispatch<NetworkCreatedEvent>(BIND_EVENT_FN(Layer::Init)); <- Might be virtuals
 				//dispatcher.Dispatch<NetworkClosedEvent>(BIND_EVENT_FN());
-				//SOREN_CORE_TRACE(e);
+				////SOREN_CORE_TRACE(e);
 				return;
 
 			};
 			#pragma endregion
 
-			Linker<TWeight> mLinker{};
-
 			bool mRunning = true; // So as to allow links to be disabled and enabled
 			bool mLocked = false;
 
-			std::map<size_t, std::shared_ptr<Node<TValue, TBias, TWeight>>> mNodes{};
 
-			std::function<TValue(const TValue)> mActivation = Activation::Identity<TValue>;
-			std::function<std::vector<TValue>(const std::vector<TValue>)> mLayerActivation = []( auto vec) {return vec; };
-
-			std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> mDefaultLinkGenerator = [](auto node, auto inputLayer) -> std::vector<size_t> {
-				std::vector<size_t> ids;
-				ids.reserve(inputLayer.mNodes.size());
-				for (auto& [id, inputNode] : inputLayer.mNodes) {
-					ids.push_back(id);
-				}
-				return ids;
+			std::shared_ptr<Activation::ActivatorBase<TValue>> mActivation{ 
+				std::make_shared<Activation::Activator<TValue>>
+				(Activation::Identity<TValue>)
+			};
+			//inline static LayerActivation mDefaultLayerActivation = [](auto vec) { return vec; };
+			std::shared_ptr<Activation::Vector::ActivatorBase<TValue>> mLayerActivation{ 
+				std::make_shared<Activation::Vector::Activator<TValue>>
+				(Activation::Vector::Identity<TValue>)
 			};
 
-			std::function<std::vector<size_t>(std::shared_ptr<Node<TValue, TBias, TWeight>> current, Layer<TValue, TBias, TWeight>& inputLayer)> mLinkGenerator = mDefaultLinkGenerator;
+			// Backprop
+			Eigen::MatrixX<TValue> mLayerActivations;
+			mutable Eigen::MatrixX<TValue> mActivated;
+			Eigen::MatrixX<TValue> mInputs;
+			Eigen::MatrixX<TValue> mWeighted;
 
-			std::function<TWeight(void)> mWeightGenerator = []() -> TWeight {return 0; };
-			TValue mValue = 0;
-			TBias mBias = 0;
+
+			Eigen::Vector<TValue, Eigen::Dynamic> mDActivatedDValue;
+			Eigen::Matrix<TValue, Eigen::Dynamic, Eigen::Dynamic> mDActivatedDInput;
+			Eigen::Matrix<TValue, Eigen::Dynamic, Eigen::Dynamic> mDLossDWeight;
+			Eigen::Vector<TValue, Eigen::Dynamic> mDLossDActivated;
+			Eigen::Vector<TValue, Eigen::Dynamic> mDLossDInput;
+
+			//Eigen::Vector<TValue, Eigen::Dynamic> mInputs;
+
+			//Eigen::Vector<TValue, Eigen::Dynamic> mWeighted;
+			Eigen::Vector<TBias, Eigen::Dynamic> mBiases;
+			Eigen::MatrixX<TWeight> mWeights;
+
+			inline static LinkGenerator mDefaultLinkGenerator = [](size_t index, auto& input) -> Eigen::Vector<TWeight, Eigen::Dynamic> {
+				index;
+				return Eigen::Vector<TWeight, Eigen::Dynamic>(input.size()).setRandom();
+			};
+
+			LinkGenerator mLinkGenerator = mDefaultLinkGenerator;
+
+			inline static BiasGenerator mDefaultBiasGenerator = [](size_t index) -> TBias { index;  return (TBias)0; };
+
+			BiasGenerator mBiasGenerator = mDefaultBiasGenerator;
 		};
 
 

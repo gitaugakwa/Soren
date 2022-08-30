@@ -9,3 +9,6 @@
 [submodule "Soren/Vendor/eigen"]
 	path = Soren/Vendor/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "Soren/Vendor/boost"]
+	path = Soren/Vendor/boost
+	url = https://github.com/boostorg/boost

@@ -1,9 +1,8 @@
 #pragma once
+#include "Log/Log.h"
 
 #include <chrono>
 #include <ostream>
-
-#include "Core.h"
 
 namespace Soren {
 
@@ -30,11 +29,35 @@ namespace Soren {
 			return std::chrono::duration_cast<std::chrono::hours>(Time).count();
 		}
 
+		inline std::string toString() const {
+			std::stringstream ss;
+			ss << milliseconds() << " milliseconds" << " | " << microseconds() << " microseconds";
+			return ss.str();
+		}
+
+		inline void toString(std::ostream& os) const {
+			os << milliseconds() << " milliseconds" << " | " << microseconds() << " microseconds";
+		}
+
+		TimeSlice operator+(const TimeSlice& e) const {
+			return { Time + e.Time };
+		}
+
+		TimeSlice& operator+=(const TimeSlice& e) {
+			Time += e.Time;
+			return *this;
+		}
+
+		template <typename T, std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, int> = 0>
+		TimeSlice operator/(const T val) const {
+			return { Time / val };
+		}
+
 		friend std::ostream& operator<<(std::ostream& os, const TimeSlice& e)
 		{
 			// Default is milliseconds
-
-			return os << e.milliseconds() << " ms";
+			e.toString(os);
+			return os;
 		}
 
 	};
@@ -51,10 +74,8 @@ namespace Soren {
 			func(std::forward<Args>(args)...);
 
 			auto t2 = std::chrono::high_resolution_clock::now();
-			auto t = t1 - t2;
 
-			TimeSlice slice;
-			slice.Time = t2 - t1;
+			TimeSlice slice{t2-t1};
 
 			return slice;
 		}
@@ -68,29 +89,41 @@ namespace Soren {
 
 			auto t2 = std::chrono::high_resolution_clock::now();
 
-			TimeSlice slice;
-			slice.Time = t2 - t1;
+			TimeSlice slice{t2-t1};
 
 			return slice;
 		}
-	}
 
-	class Stopwatch
-	{
-	public:
-		Stopwatch() = default;
-
-		TimeSlice Lap()
+		class Stopwatch
 		{
-			auto timePassed = std::chrono::high_resolution_clock::now() - m_StartTime;
-			TimeSlice slice;
-			slice.Time = timePassed;
+		public:
+			Stopwatch() = default;
 
-			return slice;
-		}
+			TimeSlice Lap()
+			{
+				auto now = std::chrono::high_resolution_clock::now();
+				TimeSlice slice{ std::chrono::duration_cast<std::chrono::nanoseconds>(now - mLastLap) };
+				mLastLap = now;
+
+				return slice;
+			}
+
+			TimeSlice Start()
+			{
+				mStartTime = std::chrono::high_resolution_clock::now();
+				mLastLap = mStartTime;
+				return  TimeSlice{};
+			}
+
+			TimeSlice Stop()
+			{
+				return TimeSlice{ std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - mStartTime) };
+			}
 
 
-	private:
-		std::chrono::steady_clock::time_point m_StartTime{ std::chrono::high_resolution_clock::now() };
-	};
+		private:
+			std::chrono::steady_clock::time_point mStartTime{ std::chrono::high_resolution_clock::now() };
+			std::chrono::steady_clock::time_point mLastLap{ mStartTime };
+		};
+	}
 }

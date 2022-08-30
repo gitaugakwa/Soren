@@ -31,7 +31,7 @@ namespace Soren
 		~FileInput();
 
 		// basic_istream
-		explicit operator std::basic_ifstream<T>&() noexcept;
+		operator std::basic_ifstream<T>&() noexcept;
 
 		void swap(FileInput<T>& other);
 
@@ -54,7 +54,7 @@ namespace Soren
 		FileInput<T>& putback(T ch);
 		FileInput<T>& getline(T* s, std::streamsize count);
 		FileInput<T>& getline(T* s, std::streamsize count, T delim);
-		FileInput<T>& ignore(std::streamsize count = 1, T delim = std::ios::eofbit);
+		FileInput<T>& ignore(std::streamsize count = 1, int delim = EOF);
 		FileInput<T>& read(T* s, std::streamsize count);
 		template <typename InType, std::enable_if_t<!std::is_pointer<InType>::value, int> = 0>
 		FileInput<T>& read(InType& s, bool readLength = false);
@@ -68,7 +68,9 @@ namespace Soren
 		FileInput<T>& sync();
 
 		void swap(FileInput<T>& lhs, FileInput<T>& rhs);
-		std::ifstream& data();
+		inline std::basic_ifstream<T>& data() {
+			return m_ifstream;
+		}
 
 		// custom functions
 		bool init();
@@ -340,7 +342,7 @@ namespace Soren
 	}
 
 	template<typename T>
-	inline FileInput<T>& FileInput<T>::ignore(std::streamsize count, T delim)
+	inline FileInput<T>& FileInput<T>::ignore(std::streamsize count, int delim)
 	{
 		if (!init()) return (*this);
 		m_ifstream.ignore(count, delim);
@@ -437,11 +439,6 @@ namespace Soren
 		lhs.swap(rhs);
 	}
 
-	template<typename T>
-	inline std::ifstream& FileInput<T>::data()
-	{
-		return m_ifstream;
-	}
 
 	template<typename T>
 	inline bool FileInput<T>::init()
@@ -452,19 +449,19 @@ namespace Soren
 		if (!m_ifstream.is_open() && !m_path.empty()) {
 			if (m_mode) {
 				if (!m_name.empty()) {
-					SOREN_CORE_INFO("{0} (FileInput): Openning file {1} in mode {2}", m_name, m_path, m_mode);
+					SOREN_CORE_INFO("{0} (FileInput): Opening file {1} in mode {2}", m_name, m_path, m_mode);
 				}
 				else {
-					SOREN_CORE_INFO("FileInput: Openning file {0} in mode {1}", m_path, m_mode);
+					SOREN_CORE_INFO("FileInput: Opening file {0} in mode {1}", m_path, m_mode);
 				}
 				m_ifstream.open(m_path, m_mode);
 			}
 			else {
 				if (!m_name.empty()) {
-					SOREN_CORE_INFO("{0} (FileInput): Openning file {1}", m_name, m_path);
+					SOREN_CORE_INFO("{0} (FileInput): Opening file {1}", m_name, m_path);
 				}
 				else {
-					SOREN_CORE_INFO("FileInput: Openning file {0}", m_path);
+					SOREN_CORE_INFO("FileInput: Opening file {0}", m_path);
 				}
 				m_ifstream.open(m_path);
 			}

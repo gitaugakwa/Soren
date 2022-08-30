@@ -5,22 +5,22 @@
 
 namespace Soren {
 
-	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
-	std::shared_ptr<spdlog::logger> Log::s_ClientLogger;
-	std::shared_ptr<spdlog::logger> Log::s_TimeLogger;
+	std::shared_ptr<spdlog::logger> Log::sCoreLogger;
+	std::shared_ptr<spdlog::logger> Log::sClientLogger;
+	std::shared_ptr<spdlog::logger> Log::sTimeLogger;
 
 
 	void Log::Init()
 	{
 		spdlog::set_pattern("%^{%T} %n: %v%$");
-		s_CoreLogger = spdlog::stdout_color_mt("NEURAL");
-		s_CoreLogger->set_level(spdlog::level::trace);
+		sCoreLogger = spdlog::stdout_color_mt("NEURAL");
+		sCoreLogger->set_level(spdlog::level::trace);
 
-		s_ClientLogger = spdlog::stdout_color_mt("APP");
-		s_ClientLogger->set_level(spdlog::level::trace);
+		sClientLogger = spdlog::stdout_color_mt("APP");
+		sClientLogger->set_level(spdlog::level::trace);
 
-		s_TimeLogger = spdlog::stdout_color_mt("TIME");
-		s_TimeLogger->set_level(spdlog::level::trace);
+		sTimeLogger = spdlog::stdout_color_mt("TIME");
+		sTimeLogger->set_level(spdlog::level::trace);
 
 	}
 

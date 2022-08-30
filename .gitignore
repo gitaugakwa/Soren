@@ -5,6 +5,20 @@
 bin/
 bin-int/
 
+Soren/Vendor/oneAPI
+
 # Files
 
 *.user
+
+# Vendors
+
+# oneAPI
+Soren/Vendor/one*
+
+
+# VS
+
+.sln
+.vcxproj
+.vcxproj.*

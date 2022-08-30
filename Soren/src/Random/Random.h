@@ -8,7 +8,7 @@
 #undef max
 #endif
 
-#include "Core.h"
+#include "Log/Log.h"
 
 #include <random>
 #include <algorithm>
@@ -97,7 +97,7 @@ namespace Soren {
 				std::uniform_int_distribution<T> dis(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
 				return dis(RandomEngine);
 			}
-			else if (std::is_floating_point<T>::value)
+			else if constexpr (std::is_floating_point<T>::value)
 			{
 				std::uniform_real_distribution<T> dis(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
 				return dis(RandomEngine);
